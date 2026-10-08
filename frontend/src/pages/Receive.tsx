@@ -70,6 +70,18 @@ export function Receive() {
       
       setDownloadableFiles(prev => [...prev, { url, name: fileName, type: mimeType }]);
       
+      // Save to IndexedDB History
+      import('../services/db').then(({ saveToHistory }) => {
+        saveToHistory({
+          id: crypto.randomUUID(),
+          filename: fileName,
+          mimeType: mimeType,
+          size: blob.size,
+          timestamp: Date.now(),
+          blob: blob
+        }).catch(err => console.error('[IndexedDB] Failed to save history', err));
+      });
+      
       // Auto-download attempt for desktop
       const a = document.createElement('a');
       a.style.display = 'none';

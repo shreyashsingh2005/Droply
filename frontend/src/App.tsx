@@ -5,6 +5,7 @@ import { Sun, Moon, Navigation } from 'lucide-react';
 
 const Send = lazy(() => import('./pages/Send').then(module => ({ default: module.Send })));
 const Receive = lazy(() => import('./pages/Receive').then(module => ({ default: module.Receive })));
+const History = lazy(() => import('./pages/History').then(module => ({ default: module.History })));
 
 function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -68,6 +69,7 @@ function App() {
             {/* Right Nav */}
             <nav className="flex items-center gap-8 text-sm font-semibold text-text-secondary">
               <Link to="/" className="hover:text-text-primary transition-colors hidden lg:block border-b-2 border-accent-primary text-text-primary py-2">Home</Link>
+              <Link to="/history" className="hover:text-text-primary transition-colors hidden lg:block py-2">History</Link>
               <a href="/#how-it-works" className="hover:text-text-primary transition-colors hidden lg:block py-2">How it works</a>
               <a href="/#privacy" className="hover:text-text-primary transition-colors hidden lg:block py-2">Privacy</a>
               <a href="/#help" className="hover:text-text-primary transition-colors hidden lg:block py-2">Help</a>
@@ -97,6 +99,7 @@ function App() {
               <Route path="/send" element={<Send />} />
               <Route path="/receive" element={<Receive />} />
               <Route path="/receive/:roomId" element={<Receive />} />
+              <Route path="/history" element={<History />} />
             </Routes>
           </Suspense>
         </main>
