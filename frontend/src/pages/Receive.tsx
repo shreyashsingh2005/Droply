@@ -26,6 +26,12 @@ export function Receive() {
   const joinRoom = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!roomId || roomId.length !== 6) return;
+    
+    if (protocolRef.current) {
+      protocolRef.current.webRTC.disconnect();
+      protocolRef.current = null;
+    }
+    
     setStatus('connecting');
 
     const protocol = new TransferProtocol(roomId.toUpperCase(), 'receiver');

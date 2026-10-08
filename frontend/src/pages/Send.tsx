@@ -36,6 +36,12 @@ export function Send() {
 
   const startSession = () => {
     if (files.length === 0) return;
+    
+    if (protocolRef.current) {
+      protocolRef.current.webRTC.disconnect();
+      protocolRef.current = null;
+    }
+    
     setStatus('waiting');
     
     const protocol = new TransferProtocol(roomId, 'sender');
