@@ -80,7 +80,7 @@ export function Receive() {
     };
 
     protocol.onConnectionStateChange = (state) => {
-      if (state === 'disconnected' || state === 'failed') {
+      if (state === 'failed' || state === 'closed') {
         setStatus('error');
       }
     };

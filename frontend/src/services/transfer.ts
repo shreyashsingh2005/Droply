@@ -28,7 +28,7 @@ export class TransferProtocol {
   public onConnectionStateChange: ((state: RTCIceConnectionState) => void) | null = null;
 
   // Receiver state
-  private receiveBuffer: ArrayBuffer[] = [];
+  private receiveBuffer: Blob[] = [];
   private receivedBytes = 0;
   private expectedFiles: FileMetadata[] = [];
   private currentReceiveIndex = 0;
@@ -42,7 +42,7 @@ export class TransferProtocol {
         this.handleMessage(msg);
       } else {
         // Binary chunk
-        this.receiveBuffer.push(data as ArrayBuffer);
+        this.receiveBuffer.push(new Blob([data as ArrayBuffer]));
         this.receivedBytes += (data as ArrayBuffer).byteLength;
         const totalSize = this.expectedFiles[this.currentReceiveIndex]?.size || 0;
         this.onFileProgress?.(this.currentReceiveIndex, this.receivedBytes, totalSize);

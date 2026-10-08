@@ -32,6 +32,11 @@ export class SignalingService {
       wsUrl = `ws://127.0.0.1:8787/room/${this.roomId}?role=${this.role}`;
     } else {
       let prodHostEnv = import.meta.env.VITE_SIGNALING_URL;
+      if (!prodHostEnv) {
+        console.warn('[Signaling] VITE_SIGNALING_URL not set in environment. Falling back to default worker.');
+        prodHostEnv = 'droply-signaling.shreyashsingh9717.workers.dev';
+      }
+      
       if (prodHostEnv) {
         // Use native URL parsing for absolute safety
         if (!/^https?:\/\//i.test(prodHostEnv) && !/^wss?:\/\//i.test(prodHostEnv)) {
