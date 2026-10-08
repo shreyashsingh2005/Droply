@@ -9,6 +9,7 @@ export function Receive() {
   const [roomId, setRoomId] = useState<string>(params.roomId || '');
   const [status, setStatus] = useState<'idle'|'connecting'|'waiting-metadata'|'confirm'|'transferring'|'completed'|'error'>('idle');
   const [filesMeta, setFilesMeta] = useState<FileMetadata[]>([]);
+  const [downloadableFiles, setDownloadableFiles] = useState<{url: string, name: string, type: string}[]>([]);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [bytesReceived, setBytesReceived] = useState(0);
@@ -49,22 +50,29 @@ export function Receive() {
       setProgress((bytes / total) * 100);
     };
 
-    protocol.onFileComplete = async (index, blob, expectedHash) => {
+    protocol.onFileComplete = async (index, blob, expectedHash, meta) => {
       const isValid = await protocol.verifyHash(blob, expectedHash);
       if (!isValid) {
+        console.error('File hash mismatch');
         setStatus('error');
         return;
       }
       
-      const fileMeta = filesMeta[index] || { name: `download-${index}` };
+      const fileName = meta?.name || `download-${index}`;
       const url = URL.createObjectURL(blob);
+      const mimeType = meta?.type || '';
+      
+      setDownloadableFiles(prev => [...prev, { url, name: fileName, type: mimeType }]);
+      
+      // Auto-download attempt for desktop
       const a = document.createElement('a');
+      a.style.display = 'none';
       a.href = url;
-      a.download = fileMeta.name;
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      // Removed revokeObjectURL timeout so manual iOS buttons keep working
     };
 
     protocol.onAllComplete = () => {
@@ -89,6 +97,11 @@ export function Receive() {
 
   const reset = () => {
     protocolRef.current?.webRTC.disconnect();
+    
+    // Clean up memory
+    downloadableFiles.forEach(file => URL.revokeObjectURL(file.url));
+    setDownloadableFiles([]);
+    
     setStatus('idle');
     setFilesMeta([]);
     setCurrentFileIndex(0);
@@ -251,8 +264,35 @@ export function Receive() {
               </div>
               <div>
                 <h3 className="text-3xl font-extrabold text-text-primary mb-2">Transfer Complete</h3>
-                <p className="text-text-secondary">Files have been successfully received and saved to your device.</p>
+                <p className="text-text-secondary">Files have been successfully received. If the auto-download was blocked, you can download them manually below.</p>
               </div>
+
+              <div className="w-full space-y-3 mt-4 text-left">
+                {downloadableFiles.map((file, i) => (
+                  <div key={i} className="flex items-center justify-between p-4 bg-bg-primary rounded-xl border border-border-subtle">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      {file.type.startsWith('image/') ? (
+                        <div className="w-10 h-10 rounded bg-bg-secondary flex-shrink-0 overflow-hidden">
+                          <img src={file.url} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 rounded bg-bg-secondary flex items-center justify-center text-text-secondary flex-shrink-0">
+                          <FileIcon size={20} />
+                        </div>
+                      )}
+                      <span className="font-medium text-text-primary truncate">{file.name}</span>
+                    </div>
+                    <a
+                      href={file.url}
+                      download={file.name}
+                      className="px-4 py-2 bg-accent-primary hover:bg-accent-hover text-white rounded-lg font-medium text-sm transition-colors flex-shrink-0"
+                    >
+                      Save
+                    </a>
+                  </div>
+                ))}
+              </div>
+
               <button 
                 onClick={reset}
                 className="mt-6 w-full bg-bg-secondary hover:bg-border-subtle text-text-primary py-4 rounded-xl font-bold transition-colors border border-border-subtle"

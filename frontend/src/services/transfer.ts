@@ -22,7 +22,7 @@ export class TransferProtocol {
   public onTransferAccepted: (() => void) | null = null;
   public onTransferRejected: (() => void) | null = null;
   public onFileProgress: ((index: number, bytes: number, total: number) => void) | null = null;
-  public onFileComplete: ((index: number, blob: Blob, hash: string) => void) | null = null;
+  public onFileComplete: ((index: number, blob: Blob, hash: string, meta: FileMetadata) => void) | null = null;
   public onAllComplete: (() => void) | null = null;
   public onCancel: (() => void) | null = null;
   public onConnectionStateChange: ((state: RTCIceConnectionState) => void) | null = null;
@@ -73,14 +73,16 @@ export class TransferProtocol {
         this.receiveBuffer = [];
         this.receivedBytes = 0;
         break;
-      case 'complete-file':
-        const blob = new Blob(this.receiveBuffer);
-        this.onFileComplete?.(msg.index, blob, msg.hash);
+      case 'complete-file': {
+        const fileMeta = this.expectedFiles[msg.index];
+        const blob = new Blob(this.receiveBuffer, { type: fileMeta?.type || 'application/octet-stream' });
+        this.onFileComplete?.(msg.index, blob, msg.hash, fileMeta);
         
         if (msg.index === this.expectedFiles.length - 1) {
           this.onAllComplete?.();
         }
         break;
+      }
       case 'cancel':
         this.onCancel?.();
         break;
