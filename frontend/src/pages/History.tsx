@@ -10,10 +10,6 @@ export function History() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    loadHistory();
-  }, []);
-
   const loadHistory = async () => {
     try {
       const data = await getHistory();
@@ -25,6 +21,10 @@ export function History() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
 
   const handleDownload = (record: HistoryRecord) => {
     const url = URL.createObjectURL(record.blob);
