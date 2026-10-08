@@ -89,6 +89,23 @@ export class RoomState {
     server.accept();
     this.sessions.set(server, { role });
     
+    // Notify existing peers that someone joined
+    for (const [session] of this.sessions) {
+      if (session !== server) {
+        try {
+          session.send(JSON.stringify({ type: 'peer-connected', role }));
+        } catch (e) {}
+      }
+    }
+
+    if (this.sessions.size === 2) {
+      for (const [session] of this.sessions) {
+        try {
+          session.send(JSON.stringify({ type: 'start' }));
+        } catch (e) {}
+      }
+    }
+    
     server.addEventListener('message', event => {
       try {
         const data = JSON.parse(event.data as string);

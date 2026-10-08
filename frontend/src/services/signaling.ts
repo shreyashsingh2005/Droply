@@ -3,6 +3,8 @@ export type SignalingMessage =
   | { type: 'answer'; sdp: RTCSessionDescriptionInit }
   | { type: 'candidate'; candidate: RTCIceCandidateInit }
   | { type: 'peer-disconnected' }
+  | { type: 'peer-connected'; role: string }
+  | { type: 'start' }
   | { type: 'transfer-request'; files: { name: string, size: number, type: string }[] }
   | { type: 'transfer-accept' }
   | { type: 'transfer-reject' };

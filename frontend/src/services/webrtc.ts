@@ -49,6 +49,13 @@ export class WebRTCService {
 
     this.signaling.onMessage = async (msg: SignalingMessage) => {
       switch (msg.type) {
+        case 'start':
+          if (this.dc) { // I am sender
+            const offer = await this.pc.createOffer();
+            await this.pc.setLocalDescription(offer);
+            this.signaling.send({ type: 'offer', sdp: offer });
+          }
+          break;
         case 'offer':
           await this.pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
           const answer = await this.pc.createAnswer();
@@ -93,14 +100,8 @@ export class WebRTCService {
     
     this.signaling.connect();
     
-    // Sender initiates WebRTC
-    this.signaling.onOpen = async () => {
-      if (this.dc) { // I am sender
-        const offer = await this.pc.createOffer();
-        await this.pc.setLocalDescription(offer);
-        this.signaling.send({ type: 'offer', sdp: offer });
-      }
-    };
+    // We don't need to initiate offer here anymore.
+    // We wait for the 'start' message from the signaling server when both peers have joined.
   }
 
   sendData(data: ArrayBuffer | string) {
