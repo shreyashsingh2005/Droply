@@ -56,26 +56,31 @@ export class SignalingService {
       }
     }
     
+    console.log(`[Signaling] Connecting to ${wsUrl}`);
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
+      console.log('[Signaling] WebSocket connected successfully');
       this.onOpen?.();
     };
 
     this.ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data) as SignalingMessage;
+        console.log(`[Signaling] Received message: ${data.type}`);
         this.onMessage?.(data);
       } catch (err) {
-        console.error('Failed to parse signaling message', err);
+        console.error('[Signaling] Failed to parse signaling message', err);
       }
     };
 
-    this.ws.onclose = () => {
+    this.ws.onclose = (event) => {
+      console.log(`[Signaling] WebSocket closed. Code: ${event.code}, Reason: ${event.reason || 'None'}`);
       this.onClose?.();
     };
 
     this.ws.onerror = (err) => {
+      console.error('[Signaling] WebSocket error observed:', err);
       this.onError?.(err);
     };
   }

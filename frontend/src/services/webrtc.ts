@@ -18,6 +18,8 @@ export class WebRTCService {
   public onDataChannelOpen: (() => void) | null = null;
   public onMessage: ((data: ArrayBuffer | string) => void) | null = null;
 
+  private pendingCandidates: RTCIceCandidateInit[] = [];
+
   constructor(roomId: string, role: 'sender' | 'receiver') {
     this.signaling = new SignalingService(roomId, role);
     this.pc = new RTCPeerConnection({
@@ -28,20 +30,30 @@ export class WebRTCService {
     });
 
     this.pc.oniceconnectionstatechange = () => {
+      console.log(`[WebRTC] ICE Connection State: ${this.pc.iceConnectionState}`);
+      if (this.pc.iceConnectionState === 'connected' || this.pc.iceConnectionState === 'completed') {
+        if (this.connectionTimeoutId) {
+          clearTimeout(this.connectionTimeoutId);
+          this.connectionTimeoutId = null;
+        }
+      }
       this.onConnectionStateChange?.(this.pc.iceConnectionState);
     };
 
     this.pc.onicecandidate = (event) => {
       if (event.candidate) {
+        console.log(`[WebRTC] Sending ICE candidate`);
         this.signaling.send({ type: 'candidate', candidate: event.candidate.toJSON() });
       }
     };
 
     if (role === 'sender') {
       this.dc = this.pc.createDataChannel('file-transfer');
+      console.log('[WebRTC] Created DataChannel (sender)');
       this.setupDataChannel();
     } else {
       this.pc.ondatachannel = (event) => {
+        console.log('[WebRTC] Received DataChannel (receiver)');
         this.dc = event.channel;
         this.setupDataChannel();
       };
@@ -50,32 +62,51 @@ export class WebRTCService {
     this.signaling.onMessage = async (msg: SignalingMessage) => {
       switch (msg.type) {
         case 'start':
+          console.log('[WebRTC] Received start signal. Generating offer...');
           if (this.dc) { // I am sender
             const offer = await this.pc.createOffer();
             await this.pc.setLocalDescription(offer);
+            console.log('[WebRTC] Sending offer');
             this.signaling.send({ type: 'offer', sdp: offer });
           }
           break;
         case 'offer':
+          console.log('[WebRTC] Received offer. Setting remote description...');
           await this.pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+          await this.processPendingCandidates();
           const answer = await this.pc.createAnswer();
           await this.pc.setLocalDescription(answer);
+          console.log('[WebRTC] Sending answer');
           this.signaling.send({ type: 'answer', sdp: answer });
           break;
         case 'answer':
+          console.log('[WebRTC] Received answer. Setting remote description...');
           await this.pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+          await this.processPendingCandidates();
           break;
         case 'candidate':
           if (msg.candidate) {
-            await this.pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+            if (this.pc.remoteDescription) {
+              console.log('[WebRTC] Adding ICE candidate immediately');
+              await this.pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+            } else {
+              console.log('[WebRTC] Queuing ICE candidate (remote description not set)');
+              this.pendingCandidates.push(msg.candidate);
+            }
           }
           break;
         default:
-          // pass other messages via a custom callback if needed, 
-          // but we can just use WebRTC data channel for app level messaging
           break;
       }
     };
+  }
+
+  private async processPendingCandidates() {
+    for (const candidate of this.pendingCandidates) {
+      console.log('[WebRTC] Processing queued ICE candidate');
+      await this.pc.addIceCandidate(new RTCIceCandidate(candidate));
+    }
+    this.pendingCandidates = [];
   }
 
   private setupDataChannel() {
@@ -91,7 +122,16 @@ export class WebRTCService {
     };
   }
 
+  private connectionTimeoutId: number | null = null;
+
   async connect() {
+    // 30 second global timeout for entire WebRTC establishment
+    this.connectionTimeoutId = window.setTimeout(() => {
+      console.error('[WebRTC] Connection timeout reached (30s). Failing connection.');
+      this.disconnect();
+      this.onConnectionStateChange?.('failed' as RTCIceConnectionState);
+    }, 30000);
+
     this.signaling.onClose = () => {
       if (this.pc.iceConnectionState !== 'connected' && this.pc.iceConnectionState !== 'completed') {
         this.onConnectionStateChange?.('failed' as RTCIceConnectionState);
@@ -119,6 +159,11 @@ export class WebRTCService {
   }
 
   disconnect() {
+    if (this.connectionTimeoutId) {
+      clearTimeout(this.connectionTimeoutId);
+      this.connectionTimeoutId = null;
+    }
+    console.log('[WebRTC] Disconnecting peer and signaling');
     this.dc?.close();
     this.pc.close();
     this.signaling.disconnect();
