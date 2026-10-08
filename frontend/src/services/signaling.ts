@@ -32,7 +32,7 @@ export class SignalingService {
       if (prodHostEnv) {
         // If user provided a full URL (e.g. https://worker.dev), convert protocol to wss:// or ws://
         if (prodHostEnv.startsWith('http')) {
-          const wsBase = prodHostEnv.replace(/^https?:\/\//, (match) => {
+          const wsBase = prodHostEnv.replace(/^https?:\/\//, (match: string) => {
             return match.startsWith('https') ? 'wss://' : 'ws://';
           });
           // Handle potential trailing slash
