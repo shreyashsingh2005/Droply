@@ -1,0 +1,94 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+
+@theme {
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-cyan: var(--accent-cyan);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-border-subtle: var(--border-subtle);
+  --color-status-success: var(--status-success);
+  --color-status-error: var(--status-error);
+}
+
+@layer base {
+  :root {
+    /* Premium Light Theme */
+    color-scheme: light;
+    --bg-primary: #F5F7FB;
+    --bg-secondary: #EEF3FA;
+    --bg-elevated: #FFFFFF;
+    --accent-primary: #2563EB;
+    --accent-hover: #1D4ED8;
+    --accent-cyan: #0891B2;
+    --text-primary: #172033;
+    --text-secondary: #53627A;
+    --border-subtle: #DCE4EF;
+    --status-success: #059669;
+    --status-error: #DC2626;
+    --shadow-glass: 0 8px 30px -4px rgba(0, 0, 0, 0.08);
+  }
+
+  .dark {
+    /* Premium Dark Theme */
+    color-scheme: dark;
+    --bg-primary: #050B14;
+    --bg-secondary: #0A111F;
+    --bg-elevated: #0D1627;
+    --accent-primary: #287BFF;
+    --accent-hover: #438FFF;
+    --accent-cyan: #43D9FF;
+    --text-primary: #F5F7FF;
+    --text-secondary: #9AAEC9;
+    --border-subtle: #1A2744;
+    --status-success: #22C55E;
+    --status-error: #EF4444;
+    --shadow-glass: 0 8px 30px -4px rgba(0, 0, 0, 0.4);
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-glass);
+  }
+  
+  .glow-text {
+    text-shadow: 0 0 15px rgba(67, 217, 255, 0.4);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
