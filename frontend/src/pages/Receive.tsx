@@ -18,6 +18,7 @@ export function Receive() {
   useEffect(() => {
     return () => {
       protocolRef.current?.webRTC.disconnect();
+      setStatus('idle');
     };
   }, []);
 

@@ -7,7 +7,7 @@ import { File as FileIcon, CheckCircle, Loader2, Copy, Link as LinkIcon, ArrowRi
 export function Send() {
   const location = useLocation();
   const [files] = useState<File[]>(location.state?.initialFiles || []);
-  const [roomId, setRoomId] = useState<string>('');
+  const [roomId] = useState<string>(() => Math.random().toString(36).substring(2, 8).toUpperCase());
   const [status, setStatus] = useState<'idle'|'waiting'|'connected'|'transferring'|'completed'|'error'>('idle');
   const [progress, setProgress] = useState(0);
   const [bytesSent, setBytesSent] = useState(0);
@@ -22,10 +22,9 @@ export function Send() {
   }, [files]);
 
   useEffect(() => {
-    const newRoom = Math.random().toString(36).substring(2, 8).toUpperCase();
-    setRoomId(newRoom);
     return () => {
       protocolRef.current?.webRTC.disconnect();
+      setStatus('idle');
     };
   }, []);
 
@@ -39,10 +38,7 @@ export function Send() {
     if (files.length === 0) return;
     setStatus('waiting');
     
-    const currentRoom = roomId || Math.random().toString(36).substring(2, 8).toUpperCase();
-    if (!roomId) setRoomId(currentRoom);
-
-    const protocol = new TransferProtocol(currentRoom, 'sender');
+    const protocol = new TransferProtocol(roomId, 'sender');
     protocolRef.current = protocol;
     
     protocol.webRTC.onDataChannelOpen = () => {
