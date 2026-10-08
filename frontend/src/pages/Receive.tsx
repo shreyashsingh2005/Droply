@@ -77,8 +77,7 @@ export function Receive() {
           filename: fileName,
           mimeType: mimeType,
           size: blob.size,
-          timestamp: Date.now(),
-          blob: blob
+          timestamp: Date.now()
         }).catch(err => console.error('[IndexedDB] Failed to save history', err));
       });
       

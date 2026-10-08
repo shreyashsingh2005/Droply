@@ -4,7 +4,7 @@ export interface HistoryRecord {
   mimeType: string;
   size: number;
   timestamp: number;
-  blob: Blob;
+  // Blob removed to respect user device storage constraints
 }
 
 const DB_NAME = 'DroplyDB';

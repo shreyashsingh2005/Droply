@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Home } from './pages/Home';
 import { useState, useEffect, useLayoutEffect, Suspense, lazy } from 'react';
 import { Sun, Moon, Navigation, History as HistoryIcon } from 'lucide-react';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const Send = lazy(() => import('./pages/Send').then(module => ({ default: module.Send })));
 const Receive = lazy(() => import('./pages/Receive').then(module => ({ default: module.Receive })));
@@ -103,15 +104,17 @@ function App() {
         </header>
         
         <main className="flex-1 w-full max-w-[1440px] mx-auto flex flex-col px-6 sm:px-12">
-          <Suspense fallback={<div className="flex-1 flex items-center justify-center p-12"><div className="w-8 h-8 rounded-full border-2 border-accent-primary border-t-transparent animate-spin"></div></div>}>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/send" element={<Send />} />
-              <Route path="/receive" element={<Receive />} />
-              <Route path="/receive/:roomId" element={<Receive />} />
-              <Route path="/history" element={<History />} />
-            </Routes>
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center p-12"><div className="w-8 h-8 rounded-full border-2 border-accent-primary border-t-transparent animate-spin"></div></div>}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/send" element={<Send />} />
+                <Route path="/receive" element={<Receive />} />
+                <Route path="/receive/:roomId" element={<Receive />} />
+                <Route path="/history" element={<History />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
         </main>
 
         <footer className="w-full border-t border-border-subtle mt-24 py-12">

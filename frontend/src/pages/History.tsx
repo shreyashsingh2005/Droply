@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getHistory, deleteHistoryRecord, clearHistory, type HistoryRecord } from '../services/db';
-import { FileIcon, Download, Trash2, AlertCircle, HardDrive, History as HistoryIcon, Search } from 'lucide-react';
+import { FileIcon, Trash2, AlertCircle, HardDrive, History as HistoryIcon, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function History() {
@@ -26,17 +26,7 @@ export function History() {
     loadHistory();
   }, []);
 
-  const handleDownload = (record: HistoryRecord) => {
-    const url = URL.createObjectURL(record.blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = record.filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  };
+
 
   const handleDelete = async (id: string) => {
     try {
@@ -160,20 +150,9 @@ export function History() {
             filteredRecords.map((record) => (
               <div key={record.id} className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-bg-secondary/30 transition-colors">
                 <div className="flex items-center gap-4 min-w-0 flex-1">
-                  {record.mimeType.startsWith('image/') ? (
-                    <div className="w-12 h-12 rounded-lg bg-bg-secondary flex-shrink-0 overflow-hidden border border-border-subtle">
-                      <img 
-                        src={URL.createObjectURL(record.blob)} 
-                        alt="Preview" 
-                        className="w-full h-full object-cover"
-                        onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-12 h-12 rounded-lg bg-bg-secondary flex items-center justify-center text-text-secondary flex-shrink-0 border border-border-subtle">
-                      <FileIcon size={24} />
-                    </div>
-                  )}
+                  <div className="w-12 h-12 rounded-lg bg-bg-secondary flex items-center justify-center text-text-secondary flex-shrink-0 border border-border-subtle">
+                    <FileIcon size={24} />
+                  </div>
                   <div className="min-w-0">
                     <h4 className="text-text-primary font-bold truncate text-lg" title={record.filename}>
                       {record.filename}
@@ -187,12 +166,9 @@ export function History() {
                 </div>
                 
                 <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <button
-                    onClick={() => handleDownload(record)}
-                    className="flex-1 sm:flex-none px-4 py-2 bg-accent-primary hover:bg-accent-hover text-white rounded-lg font-bold transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Download size={16} /> Save
-                  </button>
+                  <div className="flex-1 sm:flex-none px-4 py-2 bg-bg-secondary text-text-secondary rounded-lg font-semibold border border-border-subtle flex items-center justify-center text-sm">
+                    File Saved Locally
+                  </div>
                   <button
                     onClick={() => handleDelete(record.id)}
                     className="p-2 text-text-secondary hover:text-status-error hover:bg-status-error/10 rounded-lg transition-colors border border-transparent hover:border-status-error/20"
