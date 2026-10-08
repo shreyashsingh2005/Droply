@@ -24,12 +24,14 @@ export class SignalingService {
 
   connect() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // When using dev server proxy, we just connect to the current host
-    // or point directly to the worker if running separately.
-    // We'll point directly to the vite proxy or worker depending on env
+    
+    // In production, point to the Cloudflare Worker URL if provided via VITE_SIGNALING_URL.
+    // Otherwise, fallback to the same host (if deployed together on Cloudflare Pages).
+    const prodHost = import.meta.env.VITE_SIGNALING_URL || window.location.host;
+    
     const wsUrl = import.meta.env.DEV 
       ? `ws://127.0.0.1:8787/room/${this.roomId}?role=${this.role}`
-      : `${protocol}//${window.location.host}/room/${this.roomId}?role=${this.role}`;
+      : `${protocol}//${prodHost}/room/${this.roomId}?role=${this.role}`;
     
     this.ws = new WebSocket(wsUrl);
 
