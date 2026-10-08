@@ -7,8 +7,37 @@ import { File as FileIcon, CheckCircle, Loader2, Copy, Link as LinkIcon, ArrowRi
 export function Send() {
   const location = useLocation();
   const [files] = useState<File[]>(location.state?.initialFiles || []);
-  const [roomId] = useState<string>(() => Math.random().toString(36).substring(2, 8).toUpperCase());
-  const [status, setStatus] = useState<'idle'|'waiting'|'connected'|'transferring'|'completed'|'error'>('idle');
+  
+  const [roomId] = useState<string>(() => {
+    const isNewSession = location.state?.newSession;
+    if (isNewSession) {
+      const newId = Math.random().toString(36).substring(2, 8).toUpperCase();
+      sessionStorage.setItem('droply-sender-roomId', newId);
+      return newId;
+    }
+    const saved = sessionStorage.getItem('droply-sender-roomId');
+    if (saved) return saved;
+    const newId = Math.random().toString(36).substring(2, 8).toUpperCase();
+    sessionStorage.setItem('droply-sender-roomId', newId);
+    return newId;
+  });
+
+  const [status, setStatus] = useState<'idle'|'waiting'|'connected'|'transferring'|'completed'|'error'|'interrupted'>(() => {
+    const isNewSession = location.state?.newSession;
+    if (isNewSession) return 'idle';
+    const savedStatus = sessionStorage.getItem('droply-sender-status');
+    if (savedStatus === 'completed') return 'completed';
+    if (!location.state?.initialFiles || location.state.initialFiles.length === 0) {
+      if (savedStatus && savedStatus !== 'idle') return 'interrupted';
+      return 'idle';
+    }
+    return 'idle';
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem('droply-sender-status', status);
+  }, [status]);
+
   const [progress, setProgress] = useState(0);
   const [bytesSent, setBytesSent] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -19,7 +48,7 @@ export function Send() {
       startSession();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [files]);
+  }, [files, status]);
 
   useEffect(() => {
     return () => {
@@ -219,6 +248,24 @@ export function Send() {
                 className="mt-6 w-full bg-bg-secondary hover:bg-border-subtle text-text-primary py-4 rounded-xl font-bold transition-colors border border-border-subtle"
               >
                 Try Again
+              </button>
+            </div>
+          )}
+
+          {status === 'interrupted' && (
+            <div className="flex flex-col items-center text-center py-12 gap-6 animate-in zoom-in-95 duration-500">
+              <div className="w-24 h-24 rounded-full bg-status-error/10 text-status-error flex items-center justify-center border border-status-error/20">
+                <X size={48} />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-text-primary mb-2">Session Interrupted</h3>
+                <p className="text-text-secondary">The page was refreshed, so the selected files were lost. Please create a new room to send files.</p>
+              </div>
+              <button 
+                onClick={() => window.location.href = '/'}
+                className="mt-6 w-full bg-bg-secondary hover:bg-border-subtle text-text-primary py-4 rounded-xl font-bold transition-colors border border-border-subtle"
+              >
+                Create New Room
               </button>
             </div>
           )}

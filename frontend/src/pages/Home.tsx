@@ -55,10 +55,7 @@ export function Home() {
 
   const createSession = () => {
     if (files.length === 0) return;
-    // Note: To pass Files via router we'd need a global store or just build the UI here.
-    // For simplicity, we navigate to /send and user will pick files there if we can't pass them.
-    // But we can actually use history state in React Router to pass File objects!
-    navigate('/send', { state: { initialFiles: files } });
+    navigate('/send', { state: { initialFiles: files, newSession: true } });
   };
 
   return (

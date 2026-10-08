@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Home } from './pages/Home';
 import { useState, useEffect, useLayoutEffect, Suspense, lazy } from 'react';
-import { Sun, Moon, Navigation } from 'lucide-react';
+import { Sun, Moon, Navigation, History as HistoryIcon } from 'lucide-react';
 
 const Send = lazy(() => import('./pages/Send').then(module => ({ default: module.Send })));
 const Receive = lazy(() => import('./pages/Receive').then(module => ({ default: module.Receive })));
@@ -67,20 +67,30 @@ function App() {
             </div>
             
             {/* Right Nav */}
-            <nav className="flex items-center gap-8 text-sm font-semibold text-text-secondary">
+            <nav className="flex items-center gap-4 sm:gap-8 text-sm font-semibold text-text-secondary">
               <Link to="/" className="hover:text-text-primary transition-colors hidden lg:block border-b-2 border-accent-primary text-text-primary py-2">Home</Link>
               <Link to="/history" className="hover:text-text-primary transition-colors hidden lg:block py-2">History</Link>
               <a href="/#how-it-works" className="hover:text-text-primary transition-colors hidden lg:block py-2">How it works</a>
               <a href="/#privacy" className="hover:text-text-primary transition-colors hidden lg:block py-2">Privacy</a>
               <a href="/#help" className="hover:text-text-primary transition-colors hidden lg:block py-2">Help</a>
               
-              <button 
-                onClick={toggleTheme}
-                className="p-2 rounded-full border border-border-subtle hover:bg-bg-secondary transition-colors text-text-secondary hover:text-text-primary ml-2"
-                aria-label="Toggle theme"
-              >
-                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-              </button>
+              <div className="flex items-center gap-2">
+                <Link 
+                  to="/history"
+                  className="lg:hidden p-2 rounded-full border border-border-subtle hover:bg-bg-secondary transition-colors text-text-secondary hover:text-text-primary"
+                  aria-label="History"
+                >
+                  <HistoryIcon size={16} />
+                </Link>
+                
+                <button 
+                  onClick={toggleTheme}
+                  className="p-2 rounded-full border border-border-subtle hover:bg-bg-secondary transition-colors text-text-secondary hover:text-text-primary"
+                  aria-label="Toggle theme"
+                >
+                  {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                </button>
+              </div>
               
               <Link 
                 to="/send"
