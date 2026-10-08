@@ -5,6 +5,7 @@ export type SignalingMessage =
   | { type: 'peer-disconnected' }
   | { type: 'peer-connected'; role: string }
   | { type: 'start' }
+  | { type: 'ready' }
   | { type: 'transfer-request'; files: { name: string, size: number, type: string }[] }
   | { type: 'transfer-accept' }
   | { type: 'transfer-reject' };

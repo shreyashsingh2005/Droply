@@ -62,7 +62,8 @@ export class WebRTCService {
     this.signaling.onMessage = async (msg: SignalingMessage) => {
       switch (msg.type) {
         case 'start':
-          console.log('[WebRTC] Received start signal. Generating offer...');
+        case 'ready': // Fallback for older worker deployments
+          console.log('[WebRTC] Received start/ready signal. Generating offer...');
           if (this.dc) { // I am sender
             const offer = await this.pc.createOffer();
             await this.pc.setLocalDescription(offer);
@@ -88,7 +89,11 @@ export class WebRTCService {
           if (msg.candidate) {
             if (this.pc.remoteDescription) {
               console.log('[WebRTC] Adding ICE candidate immediately');
-              await this.pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+              try {
+                await this.pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+              } catch (e) {
+                console.error('[WebRTC] Failed to add ICE candidate', e);
+              }
             } else {
               console.log('[WebRTC] Queuing ICE candidate (remote description not set)');
               this.pendingCandidates.push(msg.candidate);
@@ -104,7 +109,11 @@ export class WebRTCService {
   private async processPendingCandidates() {
     for (const candidate of this.pendingCandidates) {
       console.log('[WebRTC] Processing queued ICE candidate');
-      await this.pc.addIceCandidate(new RTCIceCandidate(candidate));
+      try {
+        await this.pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (e) {
+        console.error('[WebRTC] Failed to add queued ICE candidate', e);
+      }
     }
     this.pendingCandidates = [];
   }
@@ -138,10 +147,13 @@ export class WebRTCService {
       }
     };
     
-    this.signaling.connect();
+    this.signaling.onOpen = () => {
+      // Send ready signal immediately to accommodate older worker deployments
+      // that do not send 'start' automatically.
+      this.signaling.send({ type: 'ready' } as unknown as SignalingMessage);
+    };
     
-    // We don't need to initiate offer here anymore.
-    // We wait for the 'start' message from the signaling server when both peers have joined.
+    this.signaling.connect();
   }
 
   sendData(data: ArrayBuffer | string) {
