@@ -1,7 +1,7 @@
 /**
  * Room codes.
  *
- * Six characters from an alphabet with the visually ambiguous glyphs removed
+ * Six characters from a 27-character alphabet with the visually ambiguous glyphs removed
  * (no O/0, I/1, S/5, B/8), because these get read aloud and typed on phone
  * keyboards. `crypto.getRandomValues` rather than `Math.random`: a guessable
  * room code is a way into somebody else's session.
@@ -9,7 +9,7 @@
  * The Worker validates `[A-Z0-9]{6}`, so this alphabet is a strict subset.
  */
 
-const ALPHABET = 'ACDEFGHJKLMNPQRTUVWXYZ2346789';
+const ALPHABET = 'ACDEFGHJKLMNPQRTUVWXYZ23467';
 export const ROOM_CODE_LENGTH = 6;
 const ROOM_CODE_RE = /^[A-Z0-9]{6}$/;
 

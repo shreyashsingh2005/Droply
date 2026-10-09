@@ -15,7 +15,7 @@ describe('generateRoomCode', () => {
   it('never uses visually ambiguous characters', () => {
     // O/0, I/1, S/5 and B/8 get misread when a code is typed from a screen or
     // read aloud over a phone.
-    const banned = /[OIS B01 58]/;
+    const banned = /[OISB0158]/;
     for (let i = 0; i < 500; i++) {
       expect(generateRoomCode()).not.toMatch(banned);
     }

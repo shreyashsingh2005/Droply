@@ -53,7 +53,9 @@ vi.mock('./webrtc', () => {
     channel = {
       readyState: 'open',
       bufferedAmount: 0,
-      bufferedAmountLowThreshold: 0,
+      _bufferedAmountLowThreshold: 0,
+      get bufferedAmountLowThreshold() { return this._bufferedAmountLowThreshold; },
+      set bufferedAmountLowThreshold(v) { this._bufferedAmountLowThreshold = v; },
       addEventListener: () => undefined,
       removeEventListener: () => undefined,
     };
@@ -124,9 +126,11 @@ const settle = (webrtcModule as unknown as { __settle: () => Promise<void> }).__
 
 /** Run queued deliveries until nothing more is pending. */
 async function drain(): Promise<void> {
-  for (let i = 0; i < 400; i++) {
+  for (let i = 0; i < 1000; i++) {
     await settle();
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    // Yield to the microtask queue so handlers (which call send() synchronously)
+    // have a chance to queue the next chain step before we resolve it.
+    await new Promise<void>((resolve) => queueMicrotask(resolve as () => void));
   }
 }
 
