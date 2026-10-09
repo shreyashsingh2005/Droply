@@ -2,16 +2,95 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+    <title>Droply — Private, Direct File Sharing</title>
+    <meta
+      name="description"
+      content="Send files straight from one device to another in your browser. No account, no upload, no cloud storage — just a direct encrypted peer-to-peer transfer."
+    />
+    <meta name="application-name" content="Droply" />
+    <meta name="apple-mobile-web-app-title" content="Droply" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Updated at runtime by useTheme so the browser chrome matches the page. -->
+    <meta name="theme-color" content="#070D18" />
+
+    <!-- Only reference assets that exist in /public. The previous build also
+         asked for favicon.ico, apple-touch-icon.png and masked-icon.svg, none
+         of which were ever added, so production served 404s for them. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#2563EB" />
-    <meta name="description" content="Droply - Private. Direct. Effortless. Peer-to-peer file sharing directly in your browser." />
-    <meta property="og:title" content="Droply" />
-    <meta property="og:description" content="Private, direct, and effortless peer-to-peer file sharing." />
-    <title>Droply - Private. Direct. Effortless.</title>
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+    <link rel="mask-icon" href="/favicon.svg" color="#1D59E0" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Droply" />
+    <meta property="og:title" content="Droply — Private, Direct File Sharing" />
+    <meta
+      property="og:description"
+      content="Send files straight from one device to another in your browser. No account, no upload, no cloud storage."
+    />
+    <meta property="og:image" content="/pwa-512x512.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Droply — Private, Direct File Sharing" />
+    <meta
+      name="twitter:description"
+      content="Direct, encrypted, peer-to-peer file transfer in the browser. No account, no upload."
+    />
+    <meta name="twitter:image" content="/pwa-512x512.png" />
+
+    <script>
+      /*
+       * Theme, applied before first paint.
+       *
+       * React cannot do this: the first frame would render with the default
+       * theme and then swap, which is the flash of wrong theme. Keep the
+       * storage key and class name in sync with src/hooks/useTheme.ts.
+       */
+      (function () {
+        try {
+          var stored = localStorage.getItem('droply:theme');
+          var dark =
+            stored === 'dark' ||
+            (stored !== 'light' &&
+              !(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches));
+          var root = document.documentElement;
+          root.classList.toggle('dark', dark);
+          root.style.colorScheme = dark ? 'dark' : 'light';
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', dark ? '#070D18' : '#F6F8FC');
+        } catch (e) {
+          /* storage blocked (private browsing): the dark default stands */
+        }
+      })();
+    </script>
+
+    <style>
+      /* Paint the page background immediately, so there is no white flash
+         before the stylesheet and the app bundle arrive. */
+      html {
+        background: #f6f8fc;
+      }
+      html.dark {
+        background: #070d18;
+      }
+      #root {
+        min-height: 100dvh;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <div style="max-width: 36rem; margin: 4rem auto; padding: 0 1.5rem; font-family: system-ui, sans-serif">
+        <h1 style="font-size: 1.5rem">Droply needs JavaScript</h1>
+        <p>
+          Droply transfers files directly between two browsers using WebRTC, which requires
+          JavaScript. Please enable it and reload this page.
+        </p>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

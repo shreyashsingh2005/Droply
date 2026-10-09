@@ -1,276 +1,611 @@
-import { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { QRCodeSVG } from 'qrcode.react';
-import { TransferProtocol } from '../services/transfer';
-import { File as FileIcon, CheckCircle, Loader2, Copy, Link as LinkIcon, ArrowRight, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  ArrowRight,
+  CheckCircle2,
+  Link2,
+  RotateCcw,
+  ShieldAlert,
+  Upload,
+  UserCheck,
+  Users,
+  XCircle,
+} from 'lucide-react';
+import {
+  Alert,
+  Badge,
+  Button,
+  EmptyState,
+  Panel,
+  PanelHeader,
+  ProgressBar,
+  Spinner,
+  StatusAnnouncer,
+} from '../components/ui';
+import { FileRow, RoomCard, StatLine, type FileRowStatus } from '../components/transfer';
+import { TransferSession, type TransferProgress } from '../services/transfer';
+import type { PeerFailure, PeerState } from '../services/webrtc';
+import { generateRoomCode } from '../services/room';
+import { peekStagedFiles } from '../services/fileHandoff';
+import { formatBytes, formatDuration, resolveMimeType } from '../services/mime';
+import { recordTransfer } from '../services/db';
+import { log } from '../lib/logger';
 
-export function Send() {
-  const location = useLocation();
-  const [files] = useState<File[]>(location.state?.initialFiles || []);
-  
-  const [roomId] = useState<string>(() => {
-    const isNewSession = location.state?.newSession;
-    if (isNewSession) {
-      const newId = Math.random().toString(36).substring(2, 8).toUpperCase();
-      sessionStorage.setItem('droply-sender-roomId', newId);
-      return newId;
+/**
+ * Sender flow.
+ *
+ * Phases, and the only transitions between them:
+ *
+ *   no-files
+ *   opening ──► waiting ──► negotiating ──► ready ──► transferring ──► completed
+ *                  ▲            │             │            │
+ *                  └── peer-left/reconnecting ┘            │
+ *                                                          ▼
+ *                           failed ◄── cancelled ◄─────────┘
+ *
+ * `waiting` has no deadline: the sender may sit on the QR screen for as long
+ * as it takes somebody to walk over with a phone.
+ */
+type Phase =
+  | 'no-files'
+  | 'opening'
+  | 'waiting'
+  | 'negotiating'
+  | 'ready'
+  | 'transferring'
+  | 'completed'
+  | 'cancelled'
+  | 'failed';
+
+const ROOM_STORAGE_KEY = 'droply:send:room';
+
+/**
+ * The room code must survive a re-render and a remount, and must *not* change
+ * underneath a receiver who is already looking at it. It is regenerated only
+ * when a new selection arrives or the user explicitly starts over.
+ */
+function useRoomCode(hasFiles: boolean): [string, () => string] {
+  const [roomId, setRoomId] = useState<string>(() => {
+    try {
+      const stored = sessionStorage.getItem(ROOM_STORAGE_KEY);
+      // Reuse the stored code only when this visit actually has files to send;
+      // otherwise the next real session would inherit a stale room.
+      if (stored && hasFiles) return stored;
+    } catch {
+      /* storage blocked */
     }
-    const saved = sessionStorage.getItem('droply-sender-roomId');
-    if (saved) return saved;
-    const newId = Math.random().toString(36).substring(2, 8).toUpperCase();
-    sessionStorage.setItem('droply-sender-roomId', newId);
-    return newId;
+    const fresh = generateRoomCode();
+    try {
+      sessionStorage.setItem(ROOM_STORAGE_KEY, fresh);
+    } catch {
+      /* storage blocked: the code still works for this page */
+    }
+    return fresh;
   });
 
-  const [status, setStatus] = useState<'idle'|'waiting'|'connected'|'transferring'|'completed'|'error'|'interrupted'>(() => {
-    const isNewSession = location.state?.newSession;
-    if (isNewSession) return 'idle';
-    const savedStatus = sessionStorage.getItem('droply-sender-status');
-    if (savedStatus === 'completed') return 'completed';
-    if (!location.state?.initialFiles || location.state.initialFiles.length === 0) {
-      if (savedStatus && savedStatus !== 'idle') return 'interrupted';
-      return 'idle';
+  const regenerate = useCallback(() => {
+    const fresh = generateRoomCode();
+    try {
+      sessionStorage.setItem(ROOM_STORAGE_KEY, fresh);
+    } catch {
+      /* ignore */
     }
-    return 'idle';
-  });
-
-  useEffect(() => {
-    sessionStorage.setItem('droply-sender-status', status);
-  }, [status]);
-
-  const [progress, setProgress] = useState(0);
-  const [bytesSent, setBytesSent] = useState(0);
-  const [copied, setCopied] = useState(false);
-  const protocolRef = useRef<TransferProtocol | null>(null);
-
-  useEffect(() => {
-    if (files.length > 0 && status === 'idle') {
-      startSession();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [files, status]);
-
-  useEffect(() => {
-    return () => {
-      protocolRef.current?.webRTC.disconnect();
-      setStatus('idle');
-    };
+    setRoomId(fresh);
+    return fresh;
   }, []);
 
-  const copyRoomCode = () => {
-    navigator.clipboard.writeText(roomId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  return [roomId, regenerate];
+}
 
-  const startSession = () => {
-    if (files.length === 0) return;
-    
-    if (protocolRef.current) {
-      protocolRef.current.webRTC.disconnect();
-      protocolRef.current = null;
+export function Send() {
+  const navigate = useNavigate();
+  // Read once: the picker on Home staged these before navigating here.
+  const [files] = useState<File[]>(() => peekStagedFiles());
+  const hasFiles = files.length > 0;
+  const [roomId, regenerateRoomCode] = useRoomCode(hasFiles);
+
+  const [phase, setPhase] = useState<Phase>(hasFiles ? 'opening' : 'no-files');
+  const [failure, setFailure] = useState<{ message: string; retryable: boolean } | null>(null);
+  const [peerStatus, setPeerStatus] = useState<PeerState>('idle');
+  const [progress, setProgress] = useState<TransferProgress | null>(null);
+  const [fileStates, setFileStates] = useState<FileRowStatus[]>(() => files.map(() => 'pending'));
+  const [peerDropped, setPeerDropped] = useState(false);
+
+  const sessionRef = useRef<TransferSession | null>(null);
+  /** Incremented per attempt; callbacks from older attempts are discarded. */
+  const attemptRef = useRef(0);
+  const phaseRef = useRef<Phase>(phase);
+  phaseRef.current = phase;
+
+  const grandTotal = useMemo(() => files.reduce((sum, f) => sum + f.size, 0), [files]);
+  const shareUrl = useMemo(
+    () => `${window.location.origin}/receive/${roomId}`,
+    [roomId],
+  );
+
+  const startSession = useCallback(
+    (room: string) => {
+      const attempt = ++attemptRef.current;
+      const live = () => attemptRef.current === attempt && sessionRef.current !== null;
+
+      // Tear the previous attempt down first, so an old session's cleanup can
+      // never interfere with this one.
+      sessionRef.current?.close();
+      sessionRef.current = null;
+
+      setFailure(null);
+      setPeerDropped(false);
+      setProgress(null);
+      setFileStates(files.map(() => 'pending'));
+      setPhase('opening');
+
+      const session = new TransferSession(room, 'sender', {
+        onState: (state: PeerState, detail?: PeerFailure) => {
+          if (!live()) return;
+          setPeerStatus(state);
+
+          if (state === 'failed' || state === 'timed-out') {
+            // A completed transfer stays completed: the peer closing their tab
+            // afterwards is not a failure of this transfer.
+            if (phaseRef.current === 'completed') return;
+            setFailure({
+              message: detail?.message ?? 'The connection failed.',
+              retryable: detail?.retryable ?? true,
+            });
+            setPhase('failed');
+            return;
+          }
+          if (state === 'waiting-for-peer' && phaseRef.current === 'opening') setPhase('waiting');
+          if (state === 'negotiating' && phaseRef.current !== 'transferring') setPhase('negotiating');
+        },
+
+        onChannelOpen: () => {
+          if (!live()) return;
+          // Describe the transfer as soon as there is a channel to describe it
+          // over. Sending the manifest here (rather than on a timer) means the
+          // receiver sees the file list the moment the connection is up.
+          setPhase((current) => (current === 'transferring' ? current : 'ready'));
+          session.sendManifest(files);
+        },
+
+        onPeerLeft: (wasConnected) => {
+          if (!live()) return;
+          if (phaseRef.current === 'completed') return;
+          if (wasConnected) {
+            setPeerDropped(true);
+            setFailure({
+              message:
+                'The receiving device disconnected before the transfer finished. Nothing partial was saved there.',
+              retryable: true,
+            });
+            setPhase('failed');
+          } else {
+            // They left before anything was established -- go back to waiting
+            // so they can rejoin with the same code.
+            setPhase('waiting');
+          }
+        },
+
+        onAccepted: () => {
+          if (!live()) return;
+          setPhase('transferring');
+        },
+
+        onRejected: () => {
+          if (!live()) return;
+          setFailure({
+            message: 'The receiver declined the transfer.',
+            retryable: true,
+          });
+          setPhase('cancelled');
+        },
+
+        onProgress: (p) => {
+          if (!live()) return;
+          setProgress(p);
+          setFileStates((prev) => {
+            if (prev[p.index] === 'active' || prev[p.index] === undefined) return prev;
+            const next = [...prev];
+            next[p.index] = 'active';
+            return next;
+          });
+        },
+
+        onFileAcknowledged: (index) => {
+          if (!live()) return;
+          setFileStates((prev) => {
+            const next = [...prev];
+            next[index] = 'done';
+            return next;
+          });
+          const file = files[index];
+          if (file) {
+            void recordTransfer({
+              filename: file.name,
+              mimeType: resolveMimeType(file.name, file.type),
+              size: file.size,
+              timestamp: Date.now(),
+              direction: 'sent',
+              outcome: 'completed',
+              hashVerified: true,
+            });
+          }
+        },
+
+        onComplete: () => {
+          if (!live()) return;
+          setPhase('completed');
+        },
+
+        onCancelled: () => {
+          if (!live()) return;
+          if (phaseRef.current === 'completed') return;
+          setFailure({ message: 'The receiver cancelled the transfer.', retryable: true });
+          setPhase('cancelled');
+        },
+
+        onError: (error) => {
+          if (!live()) return;
+          if (phaseRef.current === 'completed') return;
+          setFileStates((prev) => {
+            if (error.index === undefined) return prev;
+            const next = [...prev];
+            next[error.index] = 'failed';
+            return next;
+          });
+          setFailure({ message: error.message, retryable: error.code !== 'too-large' });
+          setPhase(error.code === 'cancelled' ? 'cancelled' : 'failed');
+        },
+      });
+
+      sessionRef.current = session;
+
+      session.start().catch((err: unknown) => {
+        if (!live()) return;
+        log.app.error('could not start sender session', err);
+        setFailure({
+          message: 'Droply could not start a connection in this browser.',
+          retryable: false,
+        });
+        setPhase('failed');
+      });
+    },
+    [files],
+  );
+
+  // Open the room exactly once per mount when there is something to send.
+  useEffect(() => {
+    if (!hasFiles) return;
+    startSession(roomId);
+    return () => {
+      attemptRef.current += 1;
+      sessionRef.current?.close();
+      sessionRef.current = null;
+    };
+    // `roomId` only changes through an explicit restart, which calls
+    // startSession itself.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasFiles, startSession]);
+
+  const retrySameRoom = useCallback(() => {
+    startSession(roomId);
+  }, [roomId, startSession]);
+
+  const restartWithNewRoom = useCallback(() => {
+    const fresh = regenerateRoomCode();
+    startSession(fresh);
+  }, [regenerateRoomCode, startSession]);
+
+  const cancel = useCallback(() => {
+    sessionRef.current?.cancel();
+    setPhase('cancelled');
+    setFailure({ message: 'You cancelled the transfer.', retryable: true });
+  }, []);
+
+  const announcement = useMemo(() => {
+    switch (phase) {
+      case 'opening':
+        return 'Opening a transfer room.';
+      case 'waiting':
+        return `Room ${roomId.split('').join(' ')} is open. Waiting for the other device to join.`;
+      case 'negotiating':
+        return 'The other device joined. Establishing a direct connection.';
+      case 'ready':
+        return 'Connected. Waiting for the receiver to accept the transfer.';
+      case 'transferring':
+        return progress
+          ? `Sending. ${Math.round((progress.totalBytes / Math.max(1, progress.grandTotal)) * 100)} percent complete.`
+          : 'Sending files.';
+      case 'completed':
+        return 'Transfer complete. All files were received and verified.';
+      case 'cancelled':
+        return 'Transfer cancelled.';
+      case 'failed':
+        return `Transfer failed. ${failure?.message ?? ''}`;
+      default:
+        return '';
     }
-    
-    setStatus('waiting');
-    
-    const protocol = new TransferProtocol(roomId, 'sender');
-    protocolRef.current = protocol;
-    
-    protocol.webRTC.onDataChannelOpen = () => {
-      setStatus('connected');
-      protocol.sendFilesMetadata(files);
-    };
+  }, [phase, roomId, progress, failure]);
 
-    protocol.onTransferAccepted = () => {
-      setStatus('transferring');
-    };
+  const overallPercent = progress
+    ? Math.min(100, (progress.totalBytes / Math.max(1, progress.grandTotal)) * 100)
+    : 0;
 
-    protocol.onTransferRejected = () => {
-      setStatus('error');
-    };
+  /* ----------------------------------------------------------------------- */
 
-    protocol.onCancel = () => {
-      setStatus('error');
-    };
-
-    protocol.onFileProgress = (_index, bytes, total) => {
-      setBytesSent(bytes);
-      setProgress((bytes / total) * 100);
-    };
-
-    protocol.onAllComplete = () => {
-      setStatus('completed');
-    };
-    
-    protocol.onConnectionStateChange = (state) => {
-      if (state === 'failed' || state === 'closed') {
-        setStatus('error');
-      }
-    };
-
-    protocol.webRTC.connect();
-  };
+  if (!hasFiles) {
+    return (
+      <div className="mx-auto w-full max-w-xl py-10">
+        <Panel>
+          <PanelHeader
+            title="Send files"
+            description="Nothing is selected yet"
+            icon={<Upload className="size-5" aria-hidden="true" />}
+          />
+          <EmptyState
+            icon={<Upload className="size-7" aria-hidden="true" />}
+            title="Pick the files first"
+            description="Droply holds your selection in this tab only — it is never uploaded, so a page refresh clears it. Choose the files again to open a new room."
+            action={
+              <Button onClick={() => navigate('/')} size="lg">
+                Choose files
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Button>
+            }
+          />
+        </Panel>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full max-w-xl mx-auto mt-16 pb-32">
-      <div className="glass-panel rounded-3xl overflow-hidden transition-all duration-300">
-        
-        {/* Header */}
-        <div className="p-8 border-b border-border-subtle bg-bg-elevated/80 flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-text-primary">Send Files</h2>
-            <p className="text-text-secondary text-sm mt-1">Sharing {files.length} {files.length === 1 ? 'file' : 'files'}.</p>
-          </div>
-          <div className="w-12 h-12 bg-accent-primary/10 flex items-center justify-center text-accent-primary rounded-xl">
-            <LinkIcon size={24} />
-          </div>
-        </div>
+    <div className="mx-auto w-full max-w-2xl py-8 sm:py-10">
+      <StatusAnnouncer message={announcement} />
 
-        {/* Dynamic Content */}
-        <div className="p-8">
-          {status === 'idle' && files.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-text-secondary mb-4">No files selected.</p>
-              <button onClick={() => window.history.back()} className="bg-bg-secondary px-6 py-2 rounded-lg text-text-primary">Go Back</button>
+      <Panel>
+        <PanelHeader
+          title="Send files"
+          description={`${files.length} ${files.length === 1 ? 'file' : 'files'} · ${formatBytes(grandTotal)}`}
+          icon={<Upload className="size-5" aria-hidden="true" />}
+          actions={
+            phase === 'waiting' ? (
+              <Badge tone="brand">
+                <Spinner className="size-3.5" />
+                Waiting
+              </Badge>
+            ) : phase === 'transferring' ? (
+              <Badge tone="brand">Sending</Badge>
+            ) : phase === 'completed' ? (
+              <Badge tone="success">
+                <CheckCircle2 className="size-3.5" aria-hidden="true" />
+                Complete
+              </Badge>
+            ) : phase === 'failed' || phase === 'cancelled' ? (
+              <Badge tone="danger">Stopped</Badge>
+            ) : null
+          }
+        />
+
+        <div className="p-5 sm:p-7">
+          {/* --- opening / waiting for the receiver ------------------------ */}
+          {(phase === 'opening' || phase === 'waiting') && (
+            <div className="flex flex-col gap-7">
+              {phase === 'opening' ? (
+                <div className="flex flex-col items-center gap-3 py-10">
+                  <Spinner className="size-7" />
+                  <p className="text-sm font-medium text-ink-muted">Opening a room…</p>
+                </div>
+              ) : (
+                <>
+                  <RoomCard roomId={roomId} shareUrl={shareUrl} />
+                  <div className="flex items-center justify-center gap-2.5 rounded-card border border-line bg-surface-sunken px-4 py-3">
+                    <Spinner className="size-4" />
+                    <p className="text-sm font-semibold text-ink-muted">
+                      Waiting for the other device to join
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
-          {status === 'waiting' && (
-            <div className="flex flex-col items-center gap-8 py-4 animate-in zoom-in-95 duration-500">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-text-primary mb-1">Room Created</h3>
-                <p className="text-sm text-text-secondary">Ask the receiver to join using this code or QR.</p>
+          {/* --- negotiating ---------------------------------------------- */}
+          {phase === 'negotiating' && (
+            <div className="flex flex-col items-center gap-4 py-12 text-center">
+              <span className="relative grid size-16 place-items-center rounded-2xl bg-brand-soft text-brand">
+                <Users className="size-7" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-lg font-bold text-ink">The other device joined</p>
+                <p className="mt-1 text-sm text-ink-muted">
+                  Setting up a direct connection between the two devices…
+                </p>
               </div>
-              
-              <div className="flex flex-col items-center gap-8 w-full">
-                <div 
-                  onClick={copyRoomCode}
-                  className="flex items-center gap-4 bg-bg-secondary border border-border-subtle p-2 pr-4 rounded-full cursor-pointer hover:border-accent-primary/50 transition-colors group shadow-lg"
+              <ProgressBar value={0} indeterminate label="Establishing connection" className="max-w-xs" />
+            </div>
+          )}
+
+          {/* --- connected, awaiting acceptance --------------------------- */}
+          {phase === 'ready' && (
+            <div className="flex flex-col items-center gap-4 py-12 text-center">
+              <span className="grid size-16 place-items-center rounded-2xl bg-success-soft text-success">
+                <UserCheck className="size-7" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-lg font-bold text-ink">Connected</p>
+                <p className="mt-1 text-sm text-ink-muted">
+                  The receiver can see what you are sending. Waiting for them to accept.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* --- transferring --------------------------------------------- */}
+          {phase === 'transferring' && (
+            <div className="flex flex-col gap-6">
+              <StatLine
+                items={[
+                  { label: 'Progress', value: `${Math.round(overallPercent)}%` },
+                  {
+                    label: 'Sent',
+                    value: `${formatBytes(progress?.totalBytes ?? 0)} / ${formatBytes(grandTotal)}`,
+                  },
+                  {
+                    label: 'Speed',
+                    value: progress?.bytesPerSecond
+                      ? `${formatBytes(progress.bytesPerSecond)}/s`
+                      : 'measuring…',
+                  },
+                  {
+                    label: 'Remaining',
+                    value: formatDuration(progress?.etaSeconds ?? null) ?? 'estimating…',
+                  },
+                ]}
+              />
+              <ProgressBar value={overallPercent} label="Overall transfer progress" />
+              <ul className="divide-y divide-line overflow-hidden rounded-card border border-line">
+                {files.map((file, index) => (
+                  <FileRow
+                    key={`${file.name}-${index}`}
+                    name={file.name}
+                    size={file.size}
+                    mimeType={file.type}
+                    status={fileStates[index] ?? 'pending'}
+                    transferred={progress?.index === index ? progress.fileBytes : undefined}
+                    bytesPerSecond={progress?.index === index ? progress.bytesPerSecond : null}
+                    etaSeconds={progress?.index === index ? progress.etaSeconds : null}
+                  />
+                ))}
+              </ul>
+              <Button variant="secondary" onClick={cancel} fullWidth>
+                <XCircle className="size-4" aria-hidden="true" />
+                Cancel transfer
+              </Button>
+            </div>
+          )}
+
+          {/* --- completed ------------------------------------------------ */}
+          {phase === 'completed' && (
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col items-center gap-4 pt-4 text-center">
+                <span className="grid size-16 place-items-center rounded-2xl bg-success-soft text-success">
+                  <CheckCircle2 className="size-8" aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="text-xl font-bold text-ink">Transfer complete</p>
+                  <p className="mt-1 text-sm text-ink-muted">
+                    All {files.length === 1 ? 'files' : files.length + ' files'} arrived and passed a
+                    SHA-256 integrity check on the other device.
+                  </p>
+                </div>
+              </div>
+              <ul className="divide-y divide-line overflow-hidden rounded-card border border-line">
+                {files.map((file, index) => (
+                  <FileRow
+                    key={`${file.name}-${index}`}
+                    name={file.name}
+                    size={file.size}
+                    mimeType={file.type}
+                    status={fileStates[index] ?? 'done'}
+                  />
+                ))}
+              </ul>
+              <div className="flex flex-col gap-2.5 sm:flex-row">
+                <Button onClick={() => navigate('/')} fullWidth>
+                  Send more files
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </Button>
+                <Button variant="secondary" fullWidth onClick={() => navigate('/history')}>
+                  View history
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* --- failed / cancelled --------------------------------------- */}
+          {(phase === 'failed' || phase === 'cancelled') && (
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col items-center gap-4 pt-4 text-center">
+                <span
+                  className={
+                    phase === 'cancelled'
+                      ? 'grid size-16 place-items-center rounded-2xl bg-surface-sunken text-ink-muted'
+                      : 'grid size-16 place-items-center rounded-2xl bg-danger-soft text-danger'
+                  }
                 >
-                  <div className="bg-bg-elevated px-8 py-3 rounded-full text-3xl font-mono tracking-widest font-bold text-accent-cyan shadow-sm border border-border-subtle">
-                    {roomId}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm font-bold text-text-secondary group-hover:text-text-primary transition-colors pr-2">
-                    {copied ? <span className="text-status-success flex items-center gap-1"><CheckCircle size={18}/> Copied</span> : <><Copy size={18}/> Copy</>}
-                  </div>
-                </div>
-
-                <div className="bg-white p-4 rounded-3xl shadow-xl ring-4 ring-bg-secondary/50">
-                  <QRCodeSVG value={`${window.location.origin}/receive/${roomId}`} size={180} level="Q" fgColor="#0F172A" />
-                </div>
-                
-                <div className="flex items-center gap-3 text-sm font-semibold text-text-secondary bg-bg-secondary px-6 py-3 rounded-full border border-border-subtle shadow-inner">
-                  <Loader2 size={18} className="animate-spin text-accent-primary" />
-                  Waiting for receiver to join...
-                </div>
-              </div>
-            </div>
-          )}
-
-          {status === 'connected' && (
-            <div className="flex flex-col items-center text-center py-12 gap-6 animate-in fade-in duration-500">
-              <div className="w-20 h-20 rounded-full bg-accent-cyan/10 flex items-center justify-center text-accent-cyan shadow-lg shadow-accent-cyan/10">
-                <CheckCircle size={40} />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-text-primary mb-2">Receiver Connected</h3>
-                <p className="text-text-secondary">Waiting for them to accept the transfer...</p>
-              </div>
-            </div>
-          )}
-
-          {status === 'transferring' && (
-            <div className="flex flex-col gap-8 py-8 animate-in slide-in-from-right-4 duration-500">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl bg-accent-primary/10 flex items-center justify-center text-accent-primary shrink-0 border border-accent-primary/20">
-                  <FileIcon size={32} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-lg font-bold text-text-primary truncate mb-1">Transferring files...</p>
-                  <div className="flex justify-between text-sm text-text-secondary font-medium">
-                    <span>Sending data</span>
-                    <span className="text-accent-primary">{Math.round(progress)}%</span>
-                  </div>
+                  {phase === 'cancelled' ? (
+                    <XCircle className="size-8" aria-hidden="true" />
+                  ) : (
+                    <ShieldAlert className="size-8" aria-hidden="true" />
+                  )}
+                </span>
+                <div>
+                  <p className="text-xl font-bold text-ink">
+                    {phase === 'cancelled' ? 'Transfer stopped' : 'Transfer failed'}
+                  </p>
+                  <p className="mt-1.5 text-sm text-ink-muted">
+                    {failure?.message ?? 'The transfer did not finish.'}
+                  </p>
                 </div>
               </div>
 
-              <div className="w-full bg-bg-secondary rounded-full h-4 border border-border-subtle overflow-hidden relative shadow-inner">
-                <div 
-                  className="absolute left-0 top-0 h-full bg-gradient-to-r from-accent-primary to-accent-cyan transition-all duration-300 ease-out" 
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
-              
-              <div className="text-center text-sm text-text-secondary font-bold mb-4">
-                {(bytesSent / 1024 / 1024).toFixed(2)} MB Sent
-              </div>
-              <button 
-                onClick={() => {
-                  protocolRef.current?.cancelTransfer();
-                  setStatus('error');
-                }}
-                className="w-full bg-bg-secondary hover:bg-status-error/10 text-status-error py-3 rounded-xl font-bold transition-colors border border-border-subtle"
-              >
-                Cancel Transfer
-              </button>
-            </div>
-          )}
+              {peerDropped && (
+                <Alert tone="info" title="What the receiver sees">
+                  Nothing incomplete is saved on the other device — Droply only writes a file after
+                  every byte has arrived and the hash matches.
+                </Alert>
+              )}
 
-          {status === 'completed' && (
-            <div className="flex flex-col items-center text-center py-12 gap-6 animate-in zoom-in-95 duration-500">
-              <div className="w-24 h-24 rounded-full bg-status-success/10 text-status-success flex items-center justify-center shadow-lg shadow-status-success/20 border border-status-success/20">
-                <CheckCircle size={48} />
+              <div className="flex flex-col gap-2.5 sm:flex-row">
+                {failure?.retryable !== false && (
+                  <Button onClick={retrySameRoom} fullWidth>
+                    <RotateCcw className="size-4" aria-hidden="true" />
+                    Try again
+                  </Button>
+                )}
+                <Button variant="secondary" fullWidth onClick={restartWithNewRoom}>
+                  <Link2 className="size-4" aria-hidden="true" />
+                  New room code
+                </Button>
+                <Button variant="ghost" fullWidth onClick={() => navigate('/')}>
+                  Start over
+                </Button>
               </div>
-              <div>
-                <h3 className="text-3xl font-extrabold text-text-primary mb-2">Transfer Complete</h3>
-                <p className="text-text-secondary">All files have been successfully delivered.</p>
-              </div>
-              <button 
-                onClick={() => window.location.href = '/'}
-                className="mt-6 w-full bg-bg-secondary hover:bg-border-subtle text-text-primary py-4 px-8 rounded-xl font-bold transition-colors border border-border-subtle flex justify-center items-center gap-2"
-              >
-                Send More Files <ArrowRight size={18} />
-              </button>
-            </div>
-          )}
-
-          {status === 'error' && (
-            <div className="flex flex-col items-center text-center py-12 gap-6 animate-in zoom-in-95 duration-500">
-              <div className="w-24 h-24 rounded-full bg-status-error/10 text-status-error flex items-center justify-center border border-status-error/20">
-                <X size={48} />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-text-primary mb-2">Connection Error</h3>
-                <p className="text-text-secondary">The connection was lost or the transfer failed.</p>
-              </div>
-              <button 
-                onClick={() => window.location.href = '/'}
-                className="mt-6 w-full bg-bg-secondary hover:bg-border-subtle text-text-primary py-4 rounded-xl font-bold transition-colors border border-border-subtle"
-              >
-                Try Again
-              </button>
-            </div>
-          )}
-
-          {status === 'interrupted' && (
-            <div className="flex flex-col items-center text-center py-12 gap-6 animate-in zoom-in-95 duration-500">
-              <div className="w-24 h-24 rounded-full bg-status-error/10 text-status-error flex items-center justify-center border border-status-error/20">
-                <X size={48} />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-text-primary mb-2">Session Interrupted</h3>
-                <p className="text-text-secondary">The page was refreshed, so the selected files were lost. Please create a new room to send files.</p>
-              </div>
-              <button 
-                onClick={() => window.location.href = '/'}
-                className="mt-6 w-full bg-bg-secondary hover:bg-border-subtle text-text-primary py-4 rounded-xl font-bold transition-colors border border-border-subtle"
-              >
-                Create New Room
-              </button>
             </div>
           )}
         </div>
-      </div>
+      </Panel>
+
+      {/* Selection summary, shown while the transfer has not started. */}
+      {(phase === 'opening' || phase === 'waiting' || phase === 'negotiating' || phase === 'ready') && (
+        <Panel className="mt-5">
+          <PanelHeader title="Selected files" description={formatBytes(grandTotal)} />
+          <ul className="divide-y divide-line">
+            {files.map((file, index) => (
+              <FileRow
+                key={`${file.name}-${index}`}
+                name={file.name}
+                size={file.size}
+                mimeType={file.type}
+                status="pending"
+              />
+            ))}
+          </ul>
+        </Panel>
+      )}
+
+      {import.meta.env.DEV && (
+        <p className="mt-4 text-center text-xs text-ink-subtle">
+          connection: {peerStatus} · room {roomId}
+        </p>
+      )}
+
+      <p className="mt-6 text-center text-sm text-ink-muted">
+        Having trouble connecting?{' '}
+        <Link to="/help" className="font-semibold text-brand hover:underline">
+          Read the troubleshooting notes
+        </Link>
+      </p>
     </div>
   );
 }

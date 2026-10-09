@@ -1,145 +1,260 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import {
+  BrowserRouter,
+  NavLink,
+  Route,
+  Routes,
+  useLocation,
+  type NavLinkRenderProps,
+} from 'react-router-dom';
+import {
+  Download,
+  History as HistoryIcon,
+  HelpCircle,
+  Home as HomeIcon,
+  ShieldCheck,
+  Upload,
+  WifiOff,
+} from 'lucide-react';
 import { Home } from './pages/Home';
-import { useState, useEffect, useLayoutEffect, Suspense, lazy } from 'react';
-import { Sun, Moon, Navigation, History as HistoryIcon } from 'lucide-react';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { Logo, Spinner, ThemeSwitch } from './components/ui';
+import { useTheme, type ThemePreference } from './hooks/useTheme';
+import { cn } from './lib/cn';
 
-const Send = lazy(() => import('./pages/Send').then(module => ({ default: module.Send })));
-const Receive = lazy(() => import('./pages/Receive').then(module => ({ default: module.Receive })));
-const History = lazy(() => import('./pages/History').then(module => ({ default: module.History })));
+const Send = lazy(() => import('./pages/Send').then((m) => ({ default: m.Send })));
+const Receive = lazy(() => import('./pages/Receive').then((m) => ({ default: m.Receive })));
+const History = lazy(() => import('./pages/History').then((m) => ({ default: m.History })));
+const Privacy = lazy(() => import('./pages/Privacy').then((m) => ({ default: m.Privacy })));
+const Help = lazy(() => import('./pages/Help').then((m) => ({ default: m.Help })));
+const NotFound = lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })));
 
-function App() {
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('droply-theme');
-    if (saved === 'light' || saved === 'dark') return saved;
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) return 'light';
-    return 'dark'; // Default to dark as requested
-  });
+const PRIMARY_NAV = [
+  { to: '/', label: 'Home', Icon: HomeIcon, end: true },
+  { to: '/send', label: 'Send', Icon: Upload, end: false },
+  { to: '/receive', label: 'Receive', Icon: Download, end: false },
+  { to: '/history', label: 'History', Icon: HistoryIcon, end: false },
+] as const;
 
-  useLayoutEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('droply-theme', theme);
-  }, [theme]);
+const SECONDARY_NAV = [
+  { to: '/help', label: 'Help', Icon: HelpCircle },
+  { to: '/privacy', label: 'Privacy', Icon: ShieldCheck },
+] as const;
 
-  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
-
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+/**
+ * Scroll handling for a single-page app: jump to a `#hash` target when one is
+ * present, otherwise go to the top on navigation. Without this, moving from a
+ * long page to a short one leaves the user halfway down the new screen.
+ */
+function ScrollManager() {
+  const { pathname, hash } = useLocation();
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    if (hash) {
+      const target = document.getElementById(hash.slice(1));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname, hash]);
+
+  return null;
+}
+
+function OfflineBanner() {
+  const [online, setOnline] = useState(() =>
+    typeof navigator === 'undefined' ? true : navigator.onLine,
+  );
+
+  useEffect(() => {
+    const up = () => setOnline(true);
+    const down = () => setOnline(false);
+    window.addEventListener('online', up);
+    window.addEventListener('offline', down);
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', up);
+      window.removeEventListener('offline', down);
     };
   }, []);
 
+  if (online) return null;
+
+  return (
+    <div
+      role="status"
+      className="flex items-center justify-center gap-2 bg-warning-soft px-4 py-2 text-center text-sm font-semibold text-warning"
+    >
+      <WifiOff className="size-4 shrink-0" aria-hidden="true" />
+      You are offline. Droply needs a connection to introduce the two devices.
+    </div>
+  );
+}
+
+function desktopNavClass({ isActive }: NavLinkRenderProps): string {
+  return cn(
+    'rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
+    isActive ? 'bg-surface-hover text-ink' : 'text-ink-muted hover:bg-surface-hover hover:text-ink',
+  );
+}
+
+function Header({
+  preference,
+  onThemeChange,
+}: {
+  preference: ThemePreference;
+  onThemeChange: (next: ThemePreference) => void;
+}) {
+  return (
+    <header className="sticky top-0 z-40 border-b border-line bg-surface/85 pt-safe backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+        <NavLink to="/" className="shrink-0 rounded-lg" aria-label="Droply home">
+          <Logo size={30} />
+        </NavLink>
+
+        <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
+          {PRIMARY_NAV.map(({ to, label, end }) => (
+            <NavLink key={to} to={to} end={end} className={desktopNavClass}>
+              {label}
+            </NavLink>
+          ))}
+          <span className="mx-1 h-5 w-px bg-line" aria-hidden="true" />
+          {SECONDARY_NAV.map(({ to, label }) => (
+            <NavLink key={to} to={to} className={desktopNavClass}>
+              {label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <ThemeSwitch preference={preference} onChange={onThemeChange} />
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/**
+ * Bottom navigation on small screens. The previous build only exposed History
+ * through a desktop-only link, so on a phone it was unreachable.
+ */
+function MobileNav() {
+  return (
+    <nav
+      aria-label="Main"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 pb-safe backdrop-blur-xl md:hidden"
+    >
+      <ul className="mx-auto flex max-w-md items-stretch">
+        {PRIMARY_NAV.map(({ to, label, Icon, end }) => (
+          <li key={to} className="flex-1">
+            <NavLink
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                cn(
+                  'flex min-h-[3.5rem] flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-semibold transition-colors',
+                  isActive ? 'text-brand' : 'text-ink-subtle',
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon className={cn('size-5', isActive && 'stroke-[2.4]')} aria-hidden="true" />
+                  {label}
+                </>
+              )}
+            </NavLink>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="mt-20 border-t border-line">
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-5 px-4 py-10 sm:px-6 md:flex-row md:justify-between">
+        <Logo size={24} />
+        <nav aria-label="Footer" className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
+          {[...PRIMARY_NAV, ...SECONDARY_NAV].map(({ to, label }) => (
+            <NavLink key={to} to={to} className="font-medium text-ink-muted hover:text-ink">
+              {label}
+            </NavLink>
+          ))}
+        </nav>
+        <p className="text-xs text-ink-subtle">
+          &copy; {new Date().getFullYear()} Droply. Files travel between devices, not through us.
+        </p>
+      </div>
+    </footer>
+  );
+}
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <Spinner className="size-7" label="Loading" />
+    </div>
+  );
+}
+
+/**
+ * The error boundary is keyed on the pathname so navigating away from a
+ * screen that threw clears the error -- previously the only way out of a
+ * crashed route was a full reload.
+ */
+function RoutedContent() {
+  const { pathname } = useLocation();
+
+  return (
+    <ErrorBoundary resetKey={pathname}>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/send" element={<Send />} />
+          <Route path="/receive" element={<Receive />} />
+          <Route path="/receive/:roomId" element={<Receive />} />
+          <Route path="/history" element={<History />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/help" element={<Help />} />
+          {/* Anything unmatched gets a real page. An unmatched route used to
+              render nothing at all, which is what produced the blank screens
+              behind Vercel's SPA rewrite. */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+
+export default function App() {
+  // Single source of truth for the theme: applies the class to <html> and
+  // keeps following the OS while the preference is "system".
+  const { preference, setPreference } = useTheme();
+
   return (
     <BrowserRouter>
-      <div className="min-h-screen flex flex-col font-sans selection:bg-accent-primary selection:text-white bg-bg-primary text-text-primary">
-        {!isOnline && (
-          <div className="w-full bg-status-error text-white text-center py-2 text-sm font-bold z-50">
-            You are offline. Peer-to-peer transfers require an active internet connection for signaling.
-          </div>
-        )}
-        <header className="sticky top-0 z-40 w-full bg-bg-primary/90 backdrop-blur-md border-b border-border-subtle">
-          <div className="max-w-[1320px] mx-auto px-6 h-20 flex justify-between items-center">
-            
-            {/* Left Nav */}
-            <div className="flex items-center gap-6">
-              <Link to="/" className="flex items-center gap-3 group">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-primary to-accent-cyan flex items-center justify-center text-white shadow-lg shadow-accent-primary/20 group-hover:shadow-accent-primary/40 transition-all">
-                  <Navigation size={18} className="rotate-45 -ml-0.5 mt-0.5 fill-white" />
-                </div>
-                <span className="font-extrabold text-2xl tracking-tight text-text-primary">Droply</span>
-              </Link>
-              
-              <div className="hidden md:flex items-center border border-border-subtle rounded-full px-3 py-1 bg-bg-secondary/50">
-                <span className="text-[11px] font-semibold text-text-secondary tracking-widest uppercase">
-                  <span className="text-accent-primary">Private.</span> <span className="text-accent-cyan">Direct.</span> Effortless.
-                </span>
-              </div>
-            </div>
-            
-            {/* Right Nav */}
-            <nav className="flex items-center gap-4 sm:gap-8 text-sm font-semibold text-text-secondary">
-              <Link to="/" className="hover:text-text-primary transition-colors hidden lg:block border-b-2 border-accent-primary text-text-primary py-2">Home</Link>
-              <Link to="/history" className="hover:text-text-primary transition-colors hidden lg:block py-2">History</Link>
-              <a href="/#how-it-works" className="hover:text-text-primary transition-colors hidden lg:block py-2">How it works</a>
-              <a href="/#privacy" className="hover:text-text-primary transition-colors hidden lg:block py-2">Privacy</a>
-              <a href="/#help" className="hover:text-text-primary transition-colors hidden lg:block py-2">Help</a>
-              
-              <div className="flex items-center gap-2">
-                <Link 
-                  to="/history"
-                  className="lg:hidden p-2 rounded-full border border-border-subtle hover:bg-bg-secondary transition-colors text-text-secondary hover:text-text-primary"
-                  aria-label="History"
-                >
-                  <HistoryIcon size={16} />
-                </Link>
-                
-                <button 
-                  onClick={toggleTheme}
-                  className="p-2 rounded-full border border-border-subtle hover:bg-bg-secondary transition-colors text-text-secondary hover:text-text-primary"
-                  aria-label="Toggle theme"
-                >
-                  {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-                </button>
-              </div>
-              
-              <Link 
-                to="/send"
-                className="hidden sm:flex bg-accent-primary hover:bg-accent-hover text-white px-6 py-2.5 rounded-full font-bold transition-all shadow-lg shadow-accent-primary/20 hover:shadow-accent-primary/40"
-              >
-                Get Started
-              </Link>
-            </nav>
-          </div>
-        </header>
-        
-        <main className="flex-1 w-full max-w-[1440px] mx-auto flex flex-col px-6 sm:px-12">
-          <ErrorBoundary>
-            <Suspense fallback={<div className="flex-1 flex items-center justify-center p-12"><div className="w-8 h-8 rounded-full border-2 border-accent-primary border-t-transparent animate-spin"></div></div>}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/send" element={<Send />} />
-                <Route path="/receive" element={<Receive />} />
-                <Route path="/receive/:roomId" element={<Receive />} />
-                <Route path="/history" element={<History />} />
-              </Routes>
-            </Suspense>
-          </ErrorBoundary>
+      <ScrollManager />
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-lg focus:bg-brand focus:px-4 focus:py-2 focus:font-semibold focus:text-white"
+      >
+        Skip to content
+      </a>
+
+      <div className="flex min-h-dvh flex-col bg-surface text-ink">
+        <OfflineBanner />
+        <Header preference={preference} onThemeChange={setPreference} />
+
+        <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 pb-10 sm:px-6 mb-safe-nav md:mb-0">
+          <RoutedContent />
         </main>
 
-        <footer className="w-full border-t border-border-subtle mt-24 py-12">
-          <div className="max-w-[1320px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded bg-gradient-to-br from-accent-primary to-accent-cyan flex items-center justify-center text-white">
-                <Navigation size={12} className="rotate-45 -ml-px mt-px fill-white" />
-              </div>
-              <span className="font-bold text-lg text-text-primary">Droply</span>
-            </div>
-            
-            <div className="flex gap-6 text-sm font-medium text-text-secondary">
-              <a href="/#how-it-works" className="hover:text-text-primary">How it works</a>
-              <a href="/#privacy" className="hover:text-text-primary">Privacy</a>
-              <a href="/#help" className="hover:text-text-primary">Help</a>
-            </div>
-
-            <div className="text-xs text-text-secondary">
-              &copy; {new Date().getFullYear()} Droply. All rights reserved.
-            </div>
-          </div>
-        </footer>
+        <Footer />
+        <MobileNav />
       </div>
     </BrowserRouter>
   );
 }
-
-export default App;

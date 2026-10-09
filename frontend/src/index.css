@@ -1,94 +1,347 @@
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 
+/* ---------------------------------------------------------------------------
+   Design tokens
+   ---------------------------------------------------------------------------
+   Every colour in the app resolves through one of these semantic variables.
+   Nothing hardcodes a hex value, which is what previously made light mode
+   inconsistent: a component that writes `text-white` or `bg-slate-900`
+   directly is correct in exactly one theme.
+
+   Both themes are defined with the same token names, so a component written
+   once is right in both.
+--------------------------------------------------------------------------- */
+
 @theme {
-  --color-bg-primary: var(--bg-primary);
-  --color-bg-secondary: var(--bg-secondary);
-  --color-bg-elevated: var(--bg-elevated);
-  --color-accent-primary: var(--accent-primary);
-  --color-accent-hover: var(--accent-hover);
-  --color-accent-cyan: var(--accent-cyan);
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-border-subtle: var(--border-subtle);
-  --color-status-success: var(--status-success);
-  --color-status-error: var(--status-error);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-surface-hover: var(--surface-hover);
+
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-ink-inverted: var(--ink-inverted);
+
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-ring: var(--brand-ring);
+  --color-cyan: var(--cyan);
+  --color-cyan-soft: var(--cyan-soft);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+
+  --radius-card: 1.25rem;
+  --radius-panel: 1.5rem;
+
+  --font-mono:
+    ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
 }
 
 @layer base {
   :root {
-    /* Premium Light Theme */
     color-scheme: light;
-    --bg-primary: #F5F7FB;
-    --bg-secondary: #EEF3FA;
-    --bg-elevated: #FFFFFF;
-    --accent-primary: #2563EB;
-    --accent-hover: #1D4ED8;
-    --accent-cyan: #0891B2;
-    --text-primary: #172033;
-    --text-secondary: #53627A;
-    --border-subtle: #DCE4EF;
-    --status-success: #059669;
-    --status-error: #DC2626;
-    --shadow-glass: 0 8px 30px -4px rgba(0, 0, 0, 0.08);
+
+    /* Light: soft neutral surfaces, white cards, dark readable ink. */
+    --surface: #f6f8fc;
+    --surface-sunken: #eef2f9;
+    --surface-raised: #ffffff;
+    --surface-overlay: #ffffff;
+    --surface-hover: #e9eef7;
+
+    --line: #dde4ef;
+    --line-strong: #c6d1e2;
+
+    --ink: #0f1729;
+    --ink-muted: #4d5b74;
+    --ink-subtle: #76839b;
+    --ink-inverted: #ffffff;
+
+    --brand: #1d59e0;
+    --brand-hover: #1749bd;
+    --brand-soft: #e8efff;
+    --brand-ring: #1d59e0;
+    --cyan: #06788f;
+    --cyan-soft: #e0f4f9;
+
+    --success: #04785c;
+    --success-soft: #e0f5ee;
+    --warning: #8a5300;
+    --warning-soft: #fdf1dd;
+    --danger: #c42121;
+    --danger-soft: #fdeaea;
+
+    --shadow-sm: 0 1px 2px rgb(15 23 41 / 0.06);
+    --shadow-md: 0 4px 16px -4px rgb(15 23 41 / 0.1), 0 1px 3px rgb(15 23 41 / 0.05);
+    --shadow-lg: 0 18px 44px -12px rgb(15 23 41 / 0.16), 0 2px 8px rgb(15 23 41 / 0.05);
+    --shadow-brand: 0 10px 28px -10px rgb(29 89 224 / 0.45);
   }
 
   .dark {
-    /* Premium Dark Theme */
     color-scheme: dark;
-    --bg-primary: #050B14;
-    --bg-secondary: #0A111F;
-    --bg-elevated: #0D1627;
-    --accent-primary: #287BFF;
-    --accent-hover: #438FFF;
-    --accent-cyan: #43D9FF;
-    --text-primary: #F5F7FF;
-    --text-secondary: #9AAEC9;
-    --border-subtle: #1A2744;
-    --status-success: #22C55E;
-    --status-error: #EF4444;
-    --shadow-glass: 0 8px 30px -4px rgba(0, 0, 0, 0.4);
+
+    /* Dark: deep navy, restrained blue/cyan accents. */
+    --surface: #070d18;
+    --surface-sunken: #050a12;
+    --surface-raised: #0d1526;
+    --surface-overlay: #111c31;
+    --surface-hover: #16233b;
+
+    --line: #1d2b45;
+    --line-strong: #2a3c5c;
+
+    --ink: #f2f6ff;
+    --ink-muted: #a3b4ce;
+    --ink-subtle: #7d8ea9;
+    --ink-inverted: #070d18;
+
+    --brand: #4c8dff;
+    --brand-hover: #6ea2ff;
+    --brand-soft: #14244a;
+    --brand-ring: #6ea2ff;
+    --cyan: #4fd9f5;
+    --cyan-soft: #0d2b38;
+
+    --success: #35d39a;
+    --success-soft: #0c2b22;
+    --warning: #f0b35e;
+    --warning-soft: #30230d;
+    --danger: #ff6b6b;
+    --danger-soft: #33151a;
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.5), 0 1px 3px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 20px 50px -14px rgb(0 0 0 / 0.65), 0 2px 10px rgb(0 0 0 / 0.4);
+    --shadow-brand: 0 10px 28px -12px rgb(76 141 255 / 0.5);
+  }
+
+  * {
+    border-color: var(--line);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
   }
 
   body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    transition: background-color 0.3s ease, color 0.3s ease;
+    margin: 0;
+    background-color: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* Never let a transfer screen bounce the whole page on iOS. */
+    overscroll-behavior-y: none;
+  }
+
+  /* One consistent, always-visible focus treatment. Removing outlines without
+     replacing them makes the app unusable by keyboard. */
+  :focus-visible {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Only for mouse users who did not focus deliberately. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  ::selection {
+    background: var(--brand);
+    color: #ffffff;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Tap targets on mobile should not be smaller than this. */
+  button,
+  a[role="button"] {
+    touch-action: manipulation;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+    color: inherit;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--line-strong);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--ink-subtle);
+    background-clip: content-box;
   }
 }
 
 @layer utilities {
-  .glass-panel {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-subtle);
-    box-shadow: var(--shadow-glass);
+  .panel {
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-md);
   }
-  
-  .glow-text {
-    text-shadow: 0 0 15px rgba(67, 217, 255, 0.4);
+
+  .panel-sunken {
+    background: var(--surface-sunken);
+    border: 1px solid var(--line);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-sm);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-md);
+  }
+  .shadow-float {
+    box-shadow: var(--shadow-lg);
+  }
+  .shadow-brand-glow {
+    box-shadow: var(--shadow-brand);
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-cyan));
+    background: linear-gradient(135deg, var(--brand) 0%, var(--cyan) 100%);
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
     background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  /* Hairline grid used behind the hero. Subtle, not decorative noise. */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, var(--line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 75%);
+  }
+
+  /* Home-screen / notch padding for the fixed mobile navigation. */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .mb-safe-nav {
+    margin-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Visible only to assistive technology. */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  .focus-ring {
+    outline: 2px solid var(--brand-ring);
+    outline-offset: 2px;
   }
 }
 
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-}
-
-@keyframes dash {
+@keyframes dash-flow {
   to {
-    stroke-dashoffset: -20;
+    stroke-dashoffset: -24;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+/* Respect the OS setting: stop decorative motion, keep the interface usable.
+   Transitions are shortened rather than removed so state changes remain
+   perceptible. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

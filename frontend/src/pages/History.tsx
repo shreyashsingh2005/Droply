@@ -1,187 +1,345 @@
-import { useState, useEffect } from 'react';
-import { getHistory, deleteHistoryRecord, clearHistory, type HistoryRecord } from '../services/db';
-import { FileIcon, Trash2, AlertCircle, HardDrive, History as HistoryIcon, Search } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  HardDrive,
+  History as HistoryIcon,
+  Info,
+  Search,
+  ShieldCheck,
+  Trash2,
+} from 'lucide-react';
+import {
+  Alert,
+  Badge,
+  Button,
+  ConfirmDialog,
+  EmptyState,
+  FileTypeIcon,
+  IconButton,
+  Panel,
+  PanelHeader,
+  Spinner,
+} from '../components/ui';
+import {
+  StorageUnavailableError,
+  clearHistory,
+  deleteHistoryRecord,
+  getHistory,
+  type TransferRecord,
+} from '../services/db';
+import { formatBytes } from '../services/mime';
+import { cn } from '../lib/cn';
 
+type Filter = 'all' | 'received' | 'sent';
+
+const FILTERS: { value: Filter; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'received', label: 'Received' },
+  { value: 'sent', label: 'Sent' },
+];
+
+function formatWhen(timestamp: number): string {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const sameDay = date.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+
+  const time = date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  if (sameDay) return `Today, ${time}`;
+  if (date.toDateString() === yesterday.toDateString()) return `Yesterday, ${time}`;
+  return `${date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: date.getFullYear() === now.getFullYear() ? undefined : 'numeric' })}, ${time}`;
+}
+
+/**
+ * Transfer history.
+ *
+ * This page records *that* a transfer happened, not the file itself. The
+ * previous version labelled every row "File Saved Locally" and told the user
+ * their files were "saved securely on this device" -- neither was true after
+ * blob persistence was removed, so there was no way to save a file from here
+ * and no indication of that. The copy and the badges below say what is
+ * actually stored.
+ */
 export function History() {
-  const [records, setRecords] = useState<HistoryRecord[]>([]);
+  const [records, setRecords] = useState<TransferRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [error, setError] = useState('');
+  const [filter, setFilter] = useState<Filter>('all');
+  const [confirmClear, setConfirmClear] = useState(false);
 
-  const loadHistory = async () => {
+  const load = useCallback(async () => {
+    setLoading(true);
     try {
-      const data = await getHistory();
-      setRecords(data);
+      setRecords(await getHistory());
+      setError(null);
     } catch (err) {
-      setError('Failed to load history from local database.');
-      console.error(err);
+      setError(
+        err instanceof StorageUnavailableError
+          ? err.message
+          : 'Could not read the local history database.',
+      );
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadHistory();
   }, []);
 
+  useEffect(() => {
+    void load();
+  }, [load]);
 
-
-  const handleDelete = async (id: string) => {
+  const remove = useCallback(async (id: string) => {
+    // Optimistic: the row disappears immediately, and is restored if the
+    // delete fails, so the list never disagrees with storage.
+    const snapshot = records;
+    setRecords((prev) => prev.filter((r) => r.id !== id));
     try {
       await deleteHistoryRecord(id);
-      setRecords(prev => prev.filter(r => r.id !== id));
-    } catch (err) {
-      console.error('Failed to delete record', err);
+    } catch {
+      setRecords(snapshot);
+      setError('That entry could not be deleted.');
     }
-  };
+  }, [records]);
 
-  const handleClearAll = async () => {
+  const clearAll = useCallback(async () => {
+    setConfirmClear(false);
+    const snapshot = records;
+    setRecords([]);
     try {
       await clearHistory();
-      setRecords([]);
-      setShowClearConfirm(false);
-    } catch (err) {
-      console.error('Failed to clear history', err);
+    } catch {
+      setRecords(snapshot);
+      setError('History could not be cleared.');
     }
-  };
+  }, [records]);
 
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  const visible = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return records.filter((record) => {
+      if (filter !== 'all' && record.direction !== filter) return false;
+      if (!needle) return true;
+      return record.filename.toLowerCase().includes(needle);
+    });
+  }, [records, search, filter]);
 
-  const filteredRecords = records.filter(r => r.filename.toLowerCase().includes(search.toLowerCase()));
+  const counts = useMemo(
+    () => ({
+      received: records.filter((r) => r.direction === 'received').length,
+      sent: records.filter((r) => r.direction === 'sent').length,
+    }),
+    [records],
+  );
 
   return (
-    <div className="w-full max-w-4xl mx-auto mt-16 pb-32 px-4 sm:px-0">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div className="mx-auto w-full max-w-3xl py-8 sm:py-10">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold text-text-primary flex items-center gap-3">
-            <HistoryIcon size={32} className="text-accent-primary" />
-            Received Files
+          <h1 className="flex items-center gap-2.5 text-2xl font-bold text-ink sm:text-3xl">
+            <HistoryIcon className="size-7 text-brand" aria-hidden="true" />
+            Transfer history
           </h1>
-          <p className="text-text-secondary mt-2">
-            Files you have successfully received are saved securely on this device.
+          <p className="mt-2 max-w-xl text-sm text-ink-muted">
+            A record of what you have sent and received on this device. Kept locally, in this
+            browser only.
           </p>
         </div>
-        
         {records.length > 0 && (
-          <button 
-            onClick={() => setShowClearConfirm(true)}
-            className="px-4 py-2 text-sm font-bold text-status-error bg-status-error/10 hover:bg-status-error/20 rounded-lg transition-colors border border-status-error/20 flex items-center gap-2"
-          >
-            <Trash2 size={16} /> Clear History
-          </button>
+          <Button variant="secondary" onClick={() => setConfirmClear(true)}>
+            <Trash2 className="size-4" aria-hidden="true" />
+            Clear history
+          </Button>
         )}
       </div>
 
-      {showClearConfirm && (
-        <div className="mb-8 p-6 bg-status-error/5 border border-status-error/20 rounded-2xl animate-in fade-in slide-in-from-top-2">
-          <h3 className="text-lg font-bold text-text-primary flex items-center gap-2 mb-2">
-            <AlertCircle size={20} className="text-status-error" />
-            Clear all received files?
-          </h3>
-          <p className="text-text-secondary mb-4">
-            This will permanently delete all files stored in your local browser history. This action cannot be undone.
-          </p>
-          <div className="flex gap-3">
-            <button 
-              onClick={handleClearAll}
-              className="px-6 py-2 bg-status-error hover:bg-red-700 text-white rounded-xl font-bold transition-colors"
-            >
-              Yes, delete all
-            </button>
-            <button 
-              onClick={() => setShowClearConfirm(false)}
-              className="px-6 py-2 bg-bg-secondary hover:bg-border-subtle text-text-primary rounded-xl font-bold transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      <Alert tone="neutral" className="mb-5" title="Metadata only — not the files">
+        Droply records file names, sizes and times, never the file contents. That keeps your device
+        storage free, and it means an entry here cannot re-open or re-download a file. To get a file
+        again, ask the sender to share it again.
+      </Alert>
 
-      <div className="glass-panel rounded-3xl overflow-hidden transition-all duration-300">
-        <div className="p-6 border-b border-border-subtle bg-bg-elevated/80">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={20} />
-            <input 
-              type="text" 
-              placeholder="Search files..."
+      <Panel>
+        <PanelHeader
+          title="Records"
+          description={`${counts.received} received · ${counts.sent} sent`}
+        />
+
+        <div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center sm:p-5">
+          <div className="relative flex-1">
+            <Search
+              className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-subtle"
+              aria-hidden="true"
+            />
+            <input
+              type="search"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-bg-secondary border border-border-subtle rounded-xl pl-12 pr-4 py-3 text-text-primary focus:outline-none focus:border-accent-cyan focus:ring-1 focus:ring-accent-cyan transition-all"
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search by file name"
+              aria-label="Search history by file name"
+              className="w-full rounded-xl border border-line bg-surface-sunken py-2.5 pl-10 pr-3 text-sm text-ink placeholder:text-ink-subtle focus:border-brand focus:bg-surface-raised"
             />
           </div>
+
+          <div
+            role="radiogroup"
+            aria-label="Filter by direction"
+            className="flex items-center gap-0.5 rounded-xl border border-line bg-surface-sunken p-0.5"
+          >
+            {FILTERS.map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={filter === value}
+                onClick={() => setFilter(value)}
+                className={cn(
+                  'min-h-9 flex-1 rounded-[0.6rem] px-3 text-sm font-semibold transition-colors sm:flex-none',
+                  filter === value
+                    ? 'bg-surface-raised text-brand shadow-soft'
+                    : 'text-ink-subtle hover:text-ink',
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="divide-y divide-border-subtle">
-          {loading ? (
-            <div className="p-12 text-center text-text-secondary flex flex-col items-center gap-4">
-              <div className="w-8 h-8 border-4 border-border-subtle border-t-accent-primary rounded-full animate-spin"></div>
-              Loading history...
-            </div>
-          ) : error ? (
-            <div className="p-12 text-center text-status-error">
-              <AlertCircle size={48} className="mx-auto mb-4 opacity-50" />
-              {error}
-            </div>
-          ) : filteredRecords.length === 0 ? (
-            <div className="p-16 text-center">
-              <div className="w-20 h-20 bg-bg-secondary rounded-full flex items-center justify-center mx-auto mb-6">
-                <HardDrive size={32} className="text-text-secondary" />
-              </div>
-              <h3 className="text-xl font-bold text-text-primary mb-2">No files found</h3>
-              <p className="text-text-secondary mb-6">
-                {search ? "No files match your search." : "You haven't received any files yet."}
-              </p>
-              {!search && (
-                <Link to="/receive" className="px-6 py-3 bg-accent-primary hover:bg-accent-hover text-white rounded-xl font-bold transition-colors inline-block">
-                  Receive Files
-                </Link>
-              )}
-            </div>
-          ) : (
-            filteredRecords.map((record) => (
-              <div key={record.id} className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-bg-secondary/30 transition-colors">
-                <div className="flex items-center gap-4 min-w-0 flex-1">
-                  <div className="w-12 h-12 rounded-lg bg-bg-secondary flex items-center justify-center text-text-secondary flex-shrink-0 border border-border-subtle">
-                    <FileIcon size={24} />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="text-text-primary font-bold truncate text-lg" title={record.filename}>
-                      {record.filename}
-                    </h4>
-                    <div className="flex items-center gap-3 text-sm text-text-secondary mt-1">
-                      <span>{formatSize(record.size)}</span>
-                      <span>•</span>
-                      <span>{new Date(record.timestamp).toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <div className="flex-1 sm:flex-none px-4 py-2 bg-bg-secondary text-text-secondary rounded-lg font-semibold border border-border-subtle flex items-center justify-center text-sm">
-                    File Saved Locally
-                  </div>
-                  <button
-                    onClick={() => handleDelete(record.id)}
-                    className="p-2 text-text-secondary hover:text-status-error hover:bg-status-error/10 rounded-lg transition-colors border border-transparent hover:border-status-error/20"
-                    title="Delete from history"
+        {loading ? (
+          <div className="flex flex-col items-center gap-3 py-16">
+            <Spinner className="size-6" label="Loading history" />
+            <p className="text-sm text-ink-muted">Loading history…</p>
+          </div>
+        ) : error ? (
+          <div className="p-5 sm:p-7">
+            <Alert tone="warning" title="History is unavailable">
+              {error} Transfers still work normally — only this record keeping is affected.
+            </Alert>
+            <Button variant="secondary" className="mt-4" onClick={() => void load()}>
+              Try again
+            </Button>
+          </div>
+        ) : visible.length === 0 ? (
+          <EmptyState
+            icon={<HardDrive className="size-7" aria-hidden="true" />}
+            title={records.length === 0 ? 'No transfers yet' : 'Nothing matches'}
+            description={
+              records.length === 0
+                ? 'Once you send or receive a file, it will show up here.'
+                : 'Try a different search term or filter.'
+            }
+            action={
+              records.length === 0 ? (
+                <div className="flex gap-2.5">
+                  <Link
+                    to="/"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-white shadow-brand-glow hover:bg-brand-hover"
                   >
-                    <Trash2 size={20} />
-                  </button>
+                    Send a file
+                  </Link>
+                  <Link
+                    to="/receive"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line bg-surface-raised px-4 text-sm font-semibold text-ink hover:bg-surface-hover"
+                  >
+                    Receive a file
+                  </Link>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
+              ) : (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setSearch('');
+                    setFilter('all');
+                  }}
+                >
+                  Clear filters
+                </Button>
+              )
+            }
+          />
+        ) : (
+          <ul className="divide-y divide-line">
+            {visible.map((record) => (
+              <li
+                key={record.id}
+                className="flex items-center gap-3.5 px-4 py-3.5 transition-colors hover:bg-surface-hover/50 sm:px-5"
+              >
+                <FileTypeIcon filename={record.filename} mimeType={record.mimeType} />
+
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-ink" title={record.filename}>
+                    {record.filename}
+                  </p>
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-ink-muted tabular">
+                    <span className="inline-flex items-center gap-1 font-semibold">
+                      {record.direction === 'received' ? (
+                        <ArrowDownToLine className="size-3" aria-hidden="true" />
+                      ) : (
+                        <ArrowUpFromLine className="size-3" aria-hidden="true" />
+                      )}
+                      {record.direction === 'received' ? 'Received' : 'Sent'}
+                    </span>
+                    <span aria-hidden="true">·</span>
+                    <span>{formatBytes(record.size)}</span>
+                    <span aria-hidden="true">·</span>
+                    <time dateTime={new Date(record.timestamp).toISOString()}>
+                      {formatWhen(record.timestamp)}
+                    </time>
+                  </p>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-2">
+                  {record.outcome === 'completed' ? (
+                    record.hashVerified ? (
+                      <Badge tone="success" className="hidden sm:inline-flex">
+                        <ShieldCheck className="size-3.5" aria-hidden="true" />
+                        Verified
+                      </Badge>
+                    ) : (
+                      <Badge tone="neutral" className="hidden sm:inline-flex">
+                        Completed
+                      </Badge>
+                    )
+                  ) : record.outcome === 'failed' ? (
+                    <Badge tone="danger" className="hidden sm:inline-flex">
+                      Failed
+                    </Badge>
+                  ) : (
+                    <Badge tone="neutral" className="hidden sm:inline-flex">
+                      Cancelled
+                    </Badge>
+                  )}
+
+                  <IconButton
+                    label={`Delete history entry for ${record.filename}`}
+                    onClick={() => void remove(record.id)}
+                    className="size-9 hover:bg-danger-soft hover:text-danger"
+                  >
+                    <Trash2 className="size-4" aria-hidden="true" />
+                  </IconButton>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
+
+      <p className="mt-5 flex items-start gap-2 text-xs text-ink-subtle">
+        <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+        History lives in this browser&rsquo;s local database. Clearing site data, or using private
+        browsing, removes it.
+      </p>
+
+      <ConfirmDialog
+        open={confirmClear}
+        title="Clear all history?"
+        description={`This permanently removes all ${records.length} ${records.length === 1 ? 'record' : 'records'} from this browser. No files are affected — Droply never stored any.`}
+        confirmLabel="Clear history"
+        onConfirm={() => void clearAll()}
+        onCancel={() => setConfirmClear(false)}
+      />
     </div>
   );
 }

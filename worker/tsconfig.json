@@ -6,10 +6,11 @@
     "types": ["@cloudflare/workers-types"],
     "moduleResolution": "Bundler",
     "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "outDir": "./dist",
-    "rootDir": "./src"
+    "noEmit": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]

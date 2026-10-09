@@ -1,326 +1,349 @@
-import { useState, useRef, useCallback } from 'react';
+import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Send, Download, CloudOff, Shield, File as FileIcon, 
-  UploadCloud, Link as LinkIcon, ArrowRight, Check, X, QrCode, Zap
+import {
+  ArrowRight,
+  CloudOff,
+  Download,
+  FolderOpen,
+  Gauge,
+  Link2,
+  QrCode,
+  ShieldCheck,
+  Trash2,
+  Upload,
+  UploadCloud,
+  X,
 } from 'lucide-react';
+import { Alert, Button, FileTypeIcon, IconButton, Panel } from '../components/ui';
+import { formatBytes } from '../services/mime';
+import { MAX_FILES, MAX_FILE_BYTES } from '../services/transfer';
+import { clearStagedFiles, stageFiles } from '../services/fileHandoff';
+import { cn } from '../lib/cn';
+
+const STEPS = [
+  {
+    Icon: FolderOpen,
+    title: 'Choose your files',
+    body: 'Drag them in or pick them from your device. They stay in this tab — nothing is uploaded.',
+  },
+  {
+    Icon: QrCode,
+    title: 'Share the code',
+    body: 'Droply opens a room and shows a six-character code and a QR code for the other device.',
+  },
+  {
+    Icon: Gauge,
+    title: 'Transfer directly',
+    body: 'Once both devices are in the room, the files move over a direct encrypted connection.',
+  },
+] as const;
+
+const GUARANTEES = [
+  {
+    Icon: CloudOff,
+    title: 'No file storage',
+    body: 'Droply has no file storage of any kind. There is no upload step and no copy left behind on a server.',
+  },
+  {
+    Icon: ShieldCheck,
+    title: 'Encrypted in transit',
+    body: 'WebRTC data channels are encrypted with DTLS, so the bytes are protected between the two devices.',
+  },
+  {
+    Icon: Gauge,
+    title: 'Verified on arrival',
+    body: 'Every file is checked with SHA-256 against the original. A file that does not match is never offered.',
+  },
+] as const;
 
 export function Home() {
-  const [files, setFiles] = useState<File[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const inputId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [dragging, setDragging] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  /** Nested dragenter/dragleave events fire constantly; count them. */
+  const dragDepth = useRef(0);
 
-  const handleFile = (selectedFiles: FileList) => {
-    const validFiles = Array.from(selectedFiles).filter(f => {
-      if (f.size > 2 * 1024 * 1024 * 1024) {
-        alert(`File ${f.name} exceeds the 2GB limit.`);
-        return false;
+  const totalSize = useMemo(() => files.reduce((sum, f) => sum + f.size, 0), [files]);
+
+  const addFiles = useCallback((incoming: FileList | File[]) => {
+    const list = Array.from(incoming);
+    const rejected: string[] = [];
+
+    setFiles((prev) => {
+      const next = [...prev];
+      for (const file of list) {
+        if (file.size > MAX_FILE_BYTES) {
+          rejected.push(`${file.name} is larger than ${formatBytes(MAX_FILE_BYTES)}`);
+          continue;
+        }
+        if (next.length >= MAX_FILES) {
+          rejected.push(`only ${MAX_FILES} files can be sent at once`);
+          break;
+        }
+        // Same name *and* same size and modified time is the same file picked
+        // twice; different sizes are genuinely different files and both are
+        // kept (the transfer protocol addresses files by index, not name).
+        const duplicate = next.some(
+          (f) => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified,
+        );
+        if (duplicate) continue;
+        next.push(file);
       }
-      return true;
+      return next;
     });
-    setFiles(prev => [...prev, ...validFiles]);
-  };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFile(e.dataTransfer.files);
-    }
+    setNotice(rejected.length > 0 ? `Skipped: ${[...new Set(rejected)].join('; ')}.` : null);
   }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      dragDepth.current = 0;
+      setDragging(false);
+      if (event.dataTransfer?.files?.length) addFiles(event.dataTransfer.files);
+    },
+    [addFiles],
+  );
+
+  const removeAt = useCallback((index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
-
-  const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const totalSize = files.reduce((acc, file) => acc + file.size, 0);
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const createSession = () => {
+  const start = useCallback(() => {
     if (files.length === 0) return;
-    navigate('/send', { state: { initialFiles: files, newSession: true } });
-  };
+    clearStagedFiles();
+    stageFiles(files);
+    navigate('/send');
+  }, [files, navigate]);
 
   return (
-    <div className="flex flex-col items-center w-full pb-20">
-      
-      {/* Hero Section */}
-      <section className="w-full flex flex-col lg:flex-row items-center justify-between mt-12 lg:mt-24 gap-12 lg:gap-8 max-w-[1320px]">
-        {/* Left Column */}
-        <div className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-panel border-accent-primary/20 bg-accent-primary/10 text-accent-cyan text-xs font-semibold tracking-widest mb-6">
-            <span className="w-2 h-2 rounded-full bg-accent-cyan animate-pulse"></span>
-            PRIVATE PEER-TO-PEER FILE SHARING
-          </div>
-          
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] mb-6 text-text-primary">
-            Your files.<br />
-            Your devices.<br />
-            <span className="text-gradient">No cloud.</span>
+    <div className="flex flex-col">
+      {/* ---------------------------------------------------------------- hero */}
+      <section className="relative isolate pt-10 sm:pt-16">
+        <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-80 bg-grid opacity-60" aria-hidden="true" />
+
+        <div className="mx-auto max-w-3xl text-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-raised px-3 py-1.5 text-xs font-semibold text-ink-muted shadow-soft">
+            <span className="size-1.5 rounded-full bg-success" aria-hidden="true" />
+            Peer-to-peer · no account · no upload
+          </span>
+
+          <h1 className="mt-6 text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-6xl">
+            Move files between your devices,
+            <br className="hidden sm:block" /> <span className="text-gradient">straight across</span>
           </h1>
-          
-          <p className="text-lg sm:text-xl text-text-secondary mb-10 max-w-lg leading-relaxed">
-            Send files directly between devices. No accounts, no cloud storage, just a private connection.
+
+          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-ink-muted sm:text-lg">
+            Droply opens a direct, encrypted connection between two browsers. Pick your files, share
+            a six-character code, and they transfer device to device — never through a file server.
           </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-10">
-            <a 
-              href="#send-panel"
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-accent-primary to-[#438FFF] hover:from-[#1960D6] hover:to-accent-primary text-white py-4 px-8 rounded-xl font-bold transition-all shadow-lg shadow-accent-primary/25"
+
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button
+              size="lg"
+              onClick={() => document.getElementById('send-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
             >
-              <Send size={20} className="-ml-1" />
-              Send Files
-              <ArrowRight size={18} className="ml-1 opacity-80" />
-            </a>
-            <Link 
-              to="/receive" 
-              className="flex items-center justify-center gap-2 glass-panel bg-bg-elevated hover:bg-bg-secondary text-text-primary py-4 px-8 rounded-xl font-bold transition-all"
+              <Upload className="size-4" aria-hidden="true" />
+              Send files
+            </Button>
+            <Link
+              to="/receive"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-6 text-base font-semibold text-ink shadow-soft transition-colors hover:bg-surface-hover"
             >
-              <Download size={20} />
-              Receive Files
+              <Download className="size-4" aria-hidden="true" />
+              Receive files
             </Link>
           </div>
-
-          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 text-sm font-medium text-text-secondary">
-            <span className="flex items-center gap-2"><Check size={16} className="text-status-success"/> No account required</span>
-            <span className="flex items-center gap-2"><Check size={16} className="text-status-success"/> Encrypted transport</span>
-            <span className="flex items-center gap-2"><Check size={16} className="text-status-success"/> Works across supported devices</span>
-          </div>
         </div>
+      </section>
 
-        {/* Right Column - Illustration */}
-        <div className="flex-1 w-full max-w-2xl relative flex flex-col items-center justify-center mt-12 lg:mt-0">
-          <div className="absolute inset-0 bg-accent-primary/20 blur-[100px] rounded-full w-3/4 h-3/4 m-auto -z-10"></div>
-          
-          <div className="relative w-full h-[350px] flex items-center justify-between px-8">
-            {/* Connection Path */}
-            <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 0 }}>
-              <path 
-                d="M 120 175 Q 300 50 480 175" 
-                fill="none" 
-                stroke="var(--accent-cyan)" 
-                strokeWidth="2" 
-                strokeDasharray="6 6" 
-                className="opacity-50"
+      {/* -------------------------------------------------------- picker panel */}
+      <section id="send-panel" className="mt-14 scroll-mt-24 sm:mt-20">
+        <Panel className="p-4 sm:p-6">
+          <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr]">
+            {/* Drop zone */}
+            <div
+              onDrop={onDrop}
+              onDragOver={(event) => event.preventDefault()}
+              onDragEnter={(event) => {
+                event.preventDefault();
+                dragDepth.current += 1;
+                setDragging(true);
+              }}
+              onDragLeave={(event) => {
+                event.preventDefault();
+                dragDepth.current = Math.max(0, dragDepth.current - 1);
+                if (dragDepth.current === 0) setDragging(false);
+              }}
+              className={cn(
+                'flex flex-col items-center justify-center rounded-card border-2 border-dashed px-6 py-10 text-center transition-colors duration-150',
+                dragging
+                  ? 'border-brand bg-brand-soft'
+                  : 'border-line bg-surface-sunken hover:border-line-strong',
+              )}
+            >
+              <span
+                className={cn(
+                  'grid size-14 place-items-center rounded-2xl transition-colors',
+                  dragging ? 'bg-brand text-white' : 'bg-surface-raised text-brand shadow-soft',
+                )}
+              >
+                <UploadCloud className="size-7" aria-hidden="true" />
+              </span>
+
+              <h2 className="mt-4 text-lg font-bold text-ink">
+                {dragging ? 'Drop to add' : 'Drop files here'}
+              </h2>
+              <p className="mt-1 text-sm text-ink-muted">or browse your device</p>
+
+              {/* A real label+input pair: works with the keyboard and with
+                  assistive technology, unlike a button that clicks a hidden
+                  input. */}
+              <label
+                htmlFor={inputId}
+                className="mt-5 inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-brand-glow transition-colors hover:bg-brand-hover"
+              >
+                <FolderOpen className="size-4" aria-hidden="true" />
+                Choose files
+              </label>
+              <input
+                id={inputId}
+                ref={inputRef}
+                type="file"
+                multiple
+                className="sr-only"
+                onChange={(event) => {
+                  if (event.target.files?.length) addFiles(event.target.files);
+                  // Reset so re-picking the same file fires `change` again.
+                  event.target.value = '';
+                }}
               />
-              <circle cx="300" cy="112" r="24" fill="var(--bg-elevated)" stroke="var(--accent-cyan)" strokeWidth="2" className="drop-shadow-[0_0_10px_var(--accent-cyan)]" />
-            </svg>
 
-            {/* Laptop */}
-            <div className="relative z-10 w-48 h-32 bg-bg-elevated rounded-t-xl border-2 border-border-subtle shadow-[var(--shadow-glass)] flex flex-col items-center justify-end overflow-hidden transform -rotate-3">
-              <div className="absolute inset-0 bg-gradient-to-br from-accent-primary/20 to-transparent"></div>
-              <div className="w-3/4 h-20 bg-bg-secondary rounded-lg mb-4 flex items-center justify-center border border-border-subtle/50 shadow-inner">
-                <FileIcon size={32} className="text-accent-primary" />
-              </div>
-              <div className="w-[120%] h-4 bg-border-subtle rounded-b-xl -ml-[10%]"></div>
+              <p className="mt-4 text-xs text-ink-subtle">
+                Up to {MAX_FILES} files · {formatBytes(MAX_FILE_BYTES)} each
+              </p>
             </div>
 
-            {/* Floating File */}
-            <div className="absolute left-1/2 top-[88px] -translate-x-1/2 z-20 flex flex-col items-center animate-[float_4s_ease-in-out_infinite]">
-              <FileIcon size={24} className="text-accent-cyan drop-shadow-[0_0_8px_var(--accent-cyan)]" />
-              <div className="absolute -top-8 bg-bg-elevated px-2 py-1 rounded text-[9px] font-bold text-accent-cyan border border-border-subtle tracking-wider uppercase whitespace-nowrap shadow-lg">
-                Direct Connection
-              </div>
-            </div>
-
-            {/* Phone */}
-            <div className="relative z-10 w-24 h-48 bg-bg-elevated rounded-3xl border-2 border-border-subtle shadow-[var(--shadow-glass)] flex flex-col items-center justify-center overflow-hidden transform rotate-3">
-              <div className="absolute inset-0 bg-gradient-to-b from-accent-cyan/10 to-transparent"></div>
-              <div className="w-16 h-24 bg-bg-secondary rounded-lg flex flex-col items-center justify-center border border-border-subtle/50">
-                 <Download size={24} className="text-accent-cyan mb-2" />
-                 <div className="w-8 h-1 bg-border-subtle rounded-full"></div>
-              </div>
-              <div className="w-6 h-1 bg-border-subtle rounded-full mt-4"></div>
-            </div>
-          </div>
-
-          <div className="flex gap-4 mt-8 z-10 relative">
-            <div className="px-4 py-1.5 rounded-full glass-panel text-xs font-semibold text-text-secondary flex items-center gap-2"><Zap size={14} className="text-accent-primary"/> Fast Transfer</div>
-            <div className="px-4 py-1.5 rounded-full glass-panel text-xs font-semibold text-text-secondary flex items-center gap-2"><Shield size={14} className="text-accent-primary"/> Your Data Stays Yours</div>
-            <div className="px-4 py-1.5 rounded-full glass-panel text-xs font-semibold text-text-secondary flex items-center gap-2"><CloudOff size={14} className="text-accent-primary"/> No Cloud Storage</div>
-          </div>
-        </div>
-      </section>
-
-      {/* File Drop and Transfer Panel */}
-      <section id="send-panel" className="w-full max-w-[1320px] mt-24 mb-12">
-        <div className="glass-panel bg-bg-elevated/40 rounded-[2rem] p-6 lg:p-8 flex flex-col lg:flex-row gap-8 items-center justify-between border border-border-subtle shadow-2xl relative overflow-hidden">
-          {/* Subtle bg glow */}
-          <div className="absolute -top-32 -left-32 w-64 h-64 bg-accent-primary/20 rounded-full blur-[80px]"></div>
-
-          {/* LEFT: Drop zone */}
-          <div 
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            className={`flex-1 w-full lg:w-auto border-2 border-dashed rounded-3xl p-8 flex flex-col items-center justify-center text-center transition-all duration-300 relative z-10 ${
-              isDragging ? 'border-accent-primary bg-accent-primary/10 scale-[1.02]' : 'border-border-subtle hover:border-text-secondary bg-bg-secondary/30 hover:bg-bg-secondary/50'
-            }`}
-          >
-            <UploadCloud size={48} className="text-accent-primary mb-4" />
-            <h3 className="text-xl font-bold text-text-primary mb-1">Drop files here</h3>
-            <p className="text-text-secondary mb-4">or click to browse</p>
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="bg-accent-primary hover:bg-accent-hover text-white py-2.5 px-6 rounded-lg font-bold transition-colors shadow-lg"
-            >
-              Choose Files
-            </button>
-            <p className="text-xs text-text-secondary mt-4">Supports multiple files • Up to 2GB per file • No upload to server</p>
-            <input 
-              type="file" 
-              multiple 
-              ref={fileInputRef}
-              onChange={(e) => e.target.files && handleFile(e.target.files)}
-              className="hidden" 
-            />
-          </div>
-
-          {/* MIDDLE: File List */}
-          <div className="flex-1 w-full h-[250px] bg-bg-secondary/30 rounded-3xl border border-border-subtle p-4 overflow-y-auto flex flex-col gap-2 relative z-10">
-            {files.length === 0 ? (
-              <div className="w-full h-full flex items-center justify-center text-text-secondary text-sm">
-                No files selected.
-              </div>
-            ) : (
-              files.map((f, i) => (
-                <div key={i} className="flex items-center justify-between bg-bg-elevated p-3 rounded-xl border border-border-subtle shrink-0 group">
-                  <div className="flex items-center gap-4 overflow-hidden">
-                    <div className="w-10 h-10 bg-accent-cyan/10 text-accent-cyan rounded-lg flex items-center justify-center shrink-0">
-                      <FileIcon size={20} />
-                    </div>
-                    <div className="truncate">
-                      <p className="text-sm font-bold text-text-primary truncate">{f.name}</p>
-                      <p className="text-xs text-text-secondary">{formatSize(f.size)} • {f.type || 'unknown'}</p>
-                    </div>
-                  </div>
-                  <button onClick={() => removeFile(i)} className="text-text-secondary hover:text-status-error opacity-0 group-hover:opacity-100 transition-opacity p-2">
-                    <X size={16} />
-                  </button>
+            {/* Selection */}
+            <div className="flex flex-col rounded-card border border-line bg-surface-sunken">
+              <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-ink">
+                    {files.length === 0
+                      ? 'Nothing selected'
+                      : `${files.length} ${files.length === 1 ? 'file' : 'files'}`}
+                  </p>
+                  <p className="text-xs text-ink-muted tabular">{formatBytes(totalSize)} total</p>
                 </div>
-              ))
-            )}
+                {files.length > 0 && (
+                  <Button variant="ghost" size="sm" onClick={() => setFiles([])}>
+                    <Trash2 className="size-3.5" aria-hidden="true" />
+                    Clear
+                  </Button>
+                )}
+              </div>
+
+              <div className="min-h-[9rem] flex-1 overflow-y-auto p-2 sm:max-h-56">
+                {files.length === 0 ? (
+                  <p className="flex h-full min-h-[8rem] items-center justify-center px-6 text-center text-sm text-ink-subtle">
+                    Files you choose appear here before anything is shared.
+                  </p>
+                ) : (
+                  <ul className="flex flex-col gap-1.5">
+                    {files.map((file, index) => (
+                      <li
+                        key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
+                        className="flex items-center gap-3 rounded-xl border border-line bg-surface-raised px-3 py-2"
+                      >
+                        <FileTypeIcon filename={file.name} mimeType={file.type} size="sm" />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-ink" title={file.name}>
+                            {file.name}
+                          </p>
+                          <p className="text-xs text-ink-muted tabular">{formatBytes(file.size)}</p>
+                        </div>
+                        <IconButton
+                          label={`Remove ${file.name}`}
+                          onClick={() => removeAt(index)}
+                          className="size-8 rounded-lg hover:bg-danger-soft hover:text-danger"
+                        >
+                          <X className="size-4" aria-hidden="true" />
+                        </IconButton>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="border-t border-line p-3">
+                <Button size="lg" fullWidth disabled={files.length === 0} onClick={start}>
+                  <Link2 className="size-4" aria-hidden="true" />
+                  Create a transfer room
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </Button>
+              </div>
+            </div>
           </div>
 
-          {/* RIGHT: Action Panel */}
-          <div className="w-full lg:w-[300px] flex flex-col justify-center bg-bg-secondary/20 p-8 rounded-3xl border border-border-subtle relative z-10 h-[250px]">
-            <p className="text-sm text-text-secondary mb-1">Total Size</p>
-            <p className="text-4xl font-extrabold text-text-primary tracking-tight mb-2">{formatSize(totalSize)}</p>
-            <p className="text-sm text-text-secondary mb-8">{files.length} {files.length === 1 ? 'file' : 'files'} selected</p>
-            
-            <button 
-              onClick={createSession}
-              disabled={files.length === 0}
-              className="w-full bg-accent-primary hover:bg-accent-hover disabled:opacity-50 disabled:hover:bg-accent-primary text-white py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-accent-primary/20"
-            >
-              <LinkIcon size={18} />
-              Create Sharing Link
-              <ArrowRight size={18} className="ml-1" />
-            </button>
-          </div>
-        </div>
+          {notice && (
+            <Alert tone="warning" className="mt-4">
+              {notice}
+            </Alert>
+          )}
+        </Panel>
       </section>
 
-      {/* Trust & Privacy */}
-      <section className="w-full max-w-[1320px] mt-12">
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="glass-panel p-8 rounded-3xl flex flex-col gap-6 group hover:border-accent-primary/30 transition-colors">
-            <div className="w-14 h-14 rounded-full bg-accent-primary/10 flex items-center justify-center text-accent-primary">
-              <Send size={24} />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-text-primary mb-2">Direct Transfer</h3>
-              <p className="text-sm text-text-secondary leading-relaxed">
-                Files travel through WebRTC between connected peers when a direct connection is possible.
-              </p>
-            </div>
-          </div>
-          
-          <div className="glass-panel p-8 rounded-3xl flex flex-col gap-6 group hover:border-accent-primary/30 transition-colors">
-            <div className="w-14 h-14 rounded-full bg-accent-cyan/10 flex items-center justify-center text-accent-cyan">
-              <CloudOff size={24} />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-text-primary mb-2">No Cloud Storage</h3>
-              <p className="text-sm text-text-secondary leading-relaxed">
-                Droply does not upload files to a central file-storage service.
-              </p>
-            </div>
-          </div>
-          
-          <div className="glass-panel p-8 rounded-3xl flex flex-col gap-6 group hover:border-accent-primary/30 transition-colors">
-            <div className="w-14 h-14 rounded-full bg-status-success/10 flex items-center justify-center text-status-success">
-              <Shield size={24} />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-text-primary mb-2">Secure Connection</h3>
-              <p className="text-sm text-text-secondary leading-relaxed">
-                WebRTC encrypts transport. Signaling coordinates connections and may process connection metadata.
-              </p>
-            </div>
-          </div>
-        </div>
+      {/* ---------------------------------------------------------- how it works */}
+      <section id="how-it-works" className="mt-20 scroll-mt-24 sm:mt-24">
+        <h2 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">How it works</h2>
+        <p className="mt-2 max-w-xl text-ink-muted">
+          Three steps, and no sign-up anywhere in them.
+        </p>
+
+        <ol className="mt-8 grid gap-4 md:grid-cols-3">
+          {STEPS.map(({ Icon, title, body }, index) => (
+            <li key={title} className="panel rounded-card p-5">
+              <div className="flex items-center justify-between">
+                <span className="grid size-11 place-items-center rounded-xl bg-brand-soft text-brand">
+                  <Icon className="size-5" aria-hidden="true" />
+                </span>
+                <span className="font-mono text-sm font-bold text-ink-subtle">
+                  0{index + 1}
+                </span>
+              </div>
+              <h3 className="mt-4 text-base font-bold text-ink">{title}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{body}</p>
+            </li>
+          ))}
+        </ol>
       </section>
 
-      {/* How it works */}
-      <section id="how-it-works" className="w-full max-w-[1320px] mt-32 border-t border-border-subtle pt-24 pb-12">
-        <div className="flex justify-between items-end mb-16">
-          <div>
-            <h2 className="text-4xl font-extrabold text-text-primary mb-4">How It Works</h2>
-            <p className="text-lg text-text-secondary">Share files in three simple steps. Fast, secure, and effortless.</p>
-          </div>
-          <button className="hidden sm:flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors text-sm font-semibold">
-            Learn More <ArrowRight size={16} />
-          </button>
+      {/* ------------------------------------------------------------- privacy */}
+      <section className="mt-16 sm:mt-20">
+        <div className="grid gap-4 md:grid-cols-3">
+          {GUARANTEES.map(({ Icon, title, body }) => (
+            <div key={title} className="panel rounded-card p-5">
+              <span className="grid size-11 place-items-center rounded-xl bg-success-soft text-success">
+                <Icon className="size-5" aria-hidden="true" />
+              </span>
+              <h3 className="mt-4 text-base font-bold text-ink">{title}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{body}</p>
+            </div>
+          ))}
         </div>
 
-        <div className="grid md:grid-cols-3 gap-12 relative">
-          <div className="flex flex-col items-start gap-4">
-            <span className="text-sm font-bold text-accent-primary">01</span>
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent-primary/20 to-accent-cyan/20 flex items-center justify-center border border-accent-primary/30 text-accent-primary shadow-lg shadow-accent-primary/10">
-              <FileIcon size={28} />
-            </div>
-            <h3 className="text-2xl font-bold text-text-primary mt-4">Select Files</h3>
-            <p className="text-text-secondary leading-relaxed">Choose the files you want to share from your device.</p>
-          </div>
-          
-          <div className="flex flex-col items-start gap-4 relative">
-            <div className="hidden md:block absolute top-12 -left-12 w-24 h-0.5 bg-gradient-to-r from-accent-primary/50 to-transparent"></div>
-            <span className="text-sm font-bold text-accent-cyan">02</span>
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent-cyan/20 to-accent-primary/20 flex items-center justify-center border border-accent-cyan/30 text-accent-cyan shadow-lg shadow-accent-cyan/10">
-              <QrCode size={28} />
-            </div>
-            <h3 className="text-2xl font-bold text-text-primary mt-4">Connect Devices</h3>
-            <p className="text-text-secondary leading-relaxed">Share a QR code, link, or room code with the other device.</p>
-          </div>
-          
-          <div className="flex flex-col items-start gap-4 relative">
-            <div className="hidden md:block absolute top-12 -left-12 w-24 h-0.5 bg-gradient-to-r from-accent-cyan/50 to-transparent"></div>
-            <span className="text-sm font-bold text-status-success">03</span>
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-status-success/20 to-status-success/10 flex items-center justify-center border border-status-success/30 text-status-success shadow-lg shadow-status-success/10">
-              <Zap size={28} />
-            </div>
-            <h3 className="text-2xl font-bold text-text-primary mt-4">Transfer Instantly</h3>
-            <p className="text-text-secondary leading-relaxed">Accept the transfer and send files over a peer connection.</p>
-          </div>
-        </div>
+        <Alert tone="neutral" className="mt-4">
+          Droply is honest about its limits: a small signalling service introduces the two browsers
+          to each other, so it does see a room code and connection details. And on networks that
+          block direct connections, a transfer needs a TURN relay to work at all.{' '}
+          <Link to="/privacy" className="font-semibold text-brand hover:underline">
+            Read the full privacy model
+          </Link>
+          .
+        </Alert>
       </section>
     </div>
   );

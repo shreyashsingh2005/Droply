@@ -1,10 +1,15 @@
 name = "droply-signaling"
 main = "src/index.ts"
-compatibility_date = "2024-03-20"
-compatibility_flags = ["nodejs_compat"]
+compatibility_date = "2024-09-23"
+workers_dev = true
 
+# Type-check before every deploy. Wrangler bundles the TypeScript itself, so
+# this only validates -- it must not emit (see tsconfig "noEmit").
 [build]
-command = "npm run build"
+command = "npm run typecheck"
+
+[observability]
+enabled = true
 
 [[durable_objects.bindings]]
 name = "ROOM_STATE"
@@ -13,3 +18,18 @@ class_name = "RoomState"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["RoomState"]
+
+# --- Optional configuration -------------------------------------------------
+#
+# Origin allow-list. Leave unset for an open deployment; set it to lock
+# signaling to your own front-end origins:
+#   [vars]
+#   ALLOWED_ORIGINS = "https://droply.example.com,https://www.droply.example.com"
+#
+# TURN relay. Required for peers on symmetric-NAT / CGNAT networks (most
+# mobile carriers) where a direct peer-to-peer path does not exist. Set these
+# as secrets so the credentials never reach the client bundle -- the browser
+# fetches them at runtime from GET /ice-servers:
+#   npx wrangler secret put TURN_URLS         # e.g. turn:turn.example.com:3478
+#   npx wrangler secret put TURN_USERNAME
+#   npx wrangler secret put TURN_CREDENTIAL
