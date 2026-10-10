@@ -64,6 +64,17 @@ function ScrollManager() {
   return null;
 }
 
+
+function BrowserSupportBanner() {
+  const hasWebRTC = typeof window !== 'undefined' && 'RTCPeerConnection' in window && 'RTCDataChannel' in window;
+  if (hasWebRTC) return null;
+  return (
+    <div className="bg-danger/20 border-b border-danger/30 p-3 text-center text-sm font-medium text-danger sm:px-6 backdrop-blur-md">
+      Your browser does not fully support WebRTC data channels. Droply requires a modern browser (like Chrome, Safari, Edge, or Firefox) to transfer files.
+    </div>
+  );
+}
+
 function OfflineBanner() {
   const [online, setOnline] = useState(() =>
     typeof navigator === 'undefined' ? true : navigator.onLine,
@@ -243,8 +254,9 @@ export default function App() {
         Skip to content
       </a>
 
-      <div className="flex min-h-dvh flex-col bg-surface text-ink">
+      <div className="flex min-h-screen min-h-dvh flex-col bg-surface text-ink">
         <OfflineBanner />
+        <BrowserSupportBanner />
         <Header preference={preference} onThemeChange={setPreference} />
 
         <main id="main" className="w-full flex-1 flex flex-col pb-10 mb-safe-nav md:mb-0">

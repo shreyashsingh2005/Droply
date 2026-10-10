@@ -213,7 +213,7 @@ export function Home() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             
-            <div className="bg-surface-overlay/40 backdrop-blur-md border border-white/10 hover:bg-surface-overlay/60 transition-all shadow-lg hover:shadow-brand-glow hover:-translate-y-1 rounded-2xl p-6 sm:p-8 flex flex-col items-start text-left">
+            <div className="bg-surface-overlay/60 backdrop-blur-md border border-white/10 hover:bg-surface-overlay/80 transition-all shadow-lg hover:shadow-brand-glow hover:-translate-y-1 rounded-2xl p-6 sm:p-8 flex flex-col items-start text-left">
               <div className="size-12 rounded-xl bg-brand/15 text-brand flex items-center justify-center mb-6 shadow-[0_0_15px_rgba(43,92,255,0.2)]">
                 <Zap className="size-6" />
               </div>
@@ -223,7 +223,7 @@ export function Home() {
               </p>
             </div>
 
-            <div className="bg-surface-overlay/40 backdrop-blur-md border border-white/10 hover:bg-surface-overlay/60 transition-all shadow-lg hover:shadow-brand-glow hover:-translate-y-1 rounded-2xl p-6 sm:p-8 flex flex-col items-start text-left">
+            <div className="bg-surface-overlay/60 backdrop-blur-md border border-white/10 hover:bg-surface-overlay/80 transition-all shadow-lg hover:shadow-brand-glow hover:-translate-y-1 rounded-2xl p-6 sm:p-8 flex flex-col items-start text-left">
               <div className="size-12 rounded-xl bg-success/15 text-success flex items-center justify-center mb-6 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
                 <Lock className="size-6" />
               </div>
@@ -233,7 +233,7 @@ export function Home() {
               </p>
             </div>
 
-            <div className="bg-surface-overlay/40 backdrop-blur-md border border-white/10 hover:bg-surface-overlay/60 transition-all shadow-lg hover:shadow-brand-glow hover:-translate-y-1 rounded-2xl p-6 sm:p-8 flex flex-col items-start text-left">
+            <div className="bg-surface-overlay/60 backdrop-blur-md border border-white/10 hover:bg-surface-overlay/80 transition-all shadow-lg hover:shadow-brand-glow hover:-translate-y-1 rounded-2xl p-6 sm:p-8 flex flex-col items-start text-left">
               <div className="size-12 rounded-xl bg-cyan/15 text-cyan flex items-center justify-center mb-6 shadow-[0_0_15px_rgba(0,240,255,0.2)]">
                 <FileBox className="size-6" />
               </div>
@@ -243,7 +243,7 @@ export function Home() {
               </p>
             </div>
 
-            <div className="bg-surface-overlay/40 backdrop-blur-md border border-white/10 hover:bg-surface-overlay/60 transition-all shadow-lg hover:shadow-brand-glow hover:-translate-y-1 rounded-2xl p-6 sm:p-8 flex flex-col items-start text-left">
+            <div className="bg-surface-overlay/60 backdrop-blur-md border border-white/10 hover:bg-surface-overlay/80 transition-all shadow-lg hover:shadow-brand-glow hover:-translate-y-1 rounded-2xl p-6 sm:p-8 flex flex-col items-start text-left">
               <div className="size-12 rounded-xl bg-warning/15 text-warning flex items-center justify-center mb-6 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
                 <Shield className="size-6" />
               </div>
