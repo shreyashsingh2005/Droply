@@ -5,9 +5,10 @@ import {
   Route,
   Routes,
   useLocation,
-  type NavLinkRenderProps,
+  
 } from 'react-router-dom';
 import {
+  ArrowRight,
   Download,
   History as HistoryIcon,
   HelpCircle,
@@ -37,8 +38,8 @@ const PRIMARY_NAV = [
 ] as const;
 
 const SECONDARY_NAV = [
-  { to: '/help', label: 'Help', Icon: HelpCircle },
-  { to: '/privacy', label: 'Privacy', Icon: ShieldCheck },
+  { to: '/help', label: 'Help', Icon: HelpCircle, end: true },
+  { to: '/privacy', label: 'Privacy', Icon: ShieldCheck, end: true },
 ] as const;
 
 /**
@@ -92,13 +93,6 @@ function OfflineBanner() {
   );
 }
 
-function desktopNavClass({ isActive }: NavLinkRenderProps): string {
-  return cn(
-    'rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
-    isActive ? 'bg-surface-hover text-ink' : 'text-ink-muted hover:bg-surface-hover hover:text-ink',
-  );
-}
-
 function Header({
   preference,
   onThemeChange,
@@ -107,28 +101,34 @@ function Header({
   onThemeChange: (next: ThemePreference) => void;
 }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-surface/85 pt-safe backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <NavLink to="/" className="shrink-0 rounded-lg" aria-label="Droply home">
-          <Logo size={30} />
+    <header className="sticky top-0 z-40 border-b border-white/5 bg-surface/85 pt-safe backdrop-blur-xl">
+      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+        <NavLink to="/" className="shrink-0 rounded-lg flex items-center gap-2" aria-label="Droply home">
+          <Logo size={32} />
+          <span className="text-xl font-bold tracking-tight text-ink hidden sm:block">Droply</span>
         </NavLink>
 
-        <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
-          {PRIMARY_NAV.map(({ to, label, end }) => (
-            <NavLink key={to} to={to} end={end} className={desktopNavClass}>
-              {label}
-            </NavLink>
-          ))}
-          <span className="mx-1 h-5 w-px bg-line" aria-hidden="true" />
-          {SECONDARY_NAV.map(({ to, label }) => (
-            <NavLink key={to} to={to} className={desktopNavClass}>
+        <nav aria-label="Main" className="hidden items-center gap-1 md:flex rounded-full border border-line/50 bg-surface-raised/40 p-1.5 backdrop-blur-md shadow-sm">
+          {[...PRIMARY_NAV, ...SECONDARY_NAV].map(({ to, label, Icon, end }) => (
+            <NavLink key={to} to={to} end={end} className={({ isActive }) => cn(
+              'flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200',
+              isActive ? 'bg-brand text-white shadow-brand-glow' : 'text-ink-muted hover:text-ink hover:bg-surface-hover/50'
+            )}>
+              <Icon className="size-4" aria-hidden="true" />
               {label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-3">
           <ThemeSwitch preference={preference} onChange={onThemeChange} />
+          <NavLink
+            to="/send"
+            className="hidden sm:inline-flex h-10 items-center justify-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white shadow-brand-glow transition-all hover:bg-brand-hover active:scale-95"
+          >
+            Get Started
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </NavLink>
         </div>
       </div>
     </header>

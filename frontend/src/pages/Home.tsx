@@ -1,398 +1,193 @@
-import { useCallback, useId, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   ArrowRight,
-  CloudOff,
+  CheckCircle2,
   Download,
+  DownloadCloud,
   FolderOpen,
-  Gauge,
   Link2,
-  QrCode,
+  ShieldAlert,
   ShieldCheck,
-  Trash2,
   Upload,
-  UploadCloud,
-  X,
+  UserCheck,
+  Users,
 } from 'lucide-react';
-import { Alert, Button, FileTypeIcon, IconButton, Panel } from '../components/ui';
-import { formatBytes } from '../services/mime';
-import { MAX_FILES, MAX_FILE_BYTES } from '../services/transfer';
-import { clearStagedFiles, stageFiles } from '../services/fileHandoff';
-import { cn } from '../lib/cn';
-
-const STEPS = [
-  {
-    Icon: FolderOpen,
-    title: 'Choose your files',
-    body: 'Drag them in or pick them from your device. They stay in this tab — nothing is uploaded.',
-  },
-  {
-    Icon: QrCode,
-    title: 'Share the code',
-    body: 'Droply opens a room and shows a six-character code and a QR code for the other device.',
-  },
-  {
-    Icon: Gauge,
-    title: 'Transfer directly',
-    body: 'Once both devices are in the room, the files move over a direct encrypted connection.',
-  },
-] as const;
-
-const GUARANTEES = [
-  {
-    Icon: CloudOff,
-    title: 'No file storage',
-    body: 'Droply has no file storage of any kind. There is no upload step and no copy left behind on a server.',
-  },
-  {
-    Icon: ShieldCheck,
-    title: 'Encrypted in transit',
-    body: 'WebRTC data channels are encrypted with DTLS, so the bytes are protected between the two devices.',
-  },
-  {
-    Icon: Gauge,
-    title: 'Verified on arrival',
-    body: 'Every file is checked with SHA-256 against the original. A file that does not match is never offered.',
-  },
-] as const;
+import { Logo } from '../components/ui';
 
 export function Home() {
-  const navigate = useNavigate();
-  const inputId = useId();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [files, setFiles] = useState<File[]>([]);
-  const [dragging, setDragging] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
-  /** Nested dragenter/dragleave events fire constantly; count them. */
-  const dragDepth = useRef(0);
-
-  const totalSize = useMemo(() => files.reduce((sum, f) => sum + f.size, 0), [files]);
-
-  const addFiles = useCallback((incoming: FileList | File[]) => {
-    const list = Array.from(incoming);
-    const rejected: string[] = [];
-
-    setFiles((prev) => {
-      const next = [...prev];
-      for (const file of list) {
-        if (file.size > MAX_FILE_BYTES) {
-          rejected.push(`${file.name} is larger than ${formatBytes(MAX_FILE_BYTES)}`);
-          continue;
-        }
-        if (next.length >= MAX_FILES) {
-          rejected.push(`only ${MAX_FILES} files can be sent at once`);
-          break;
-        }
-        // Same name *and* same size and modified time is the same file picked
-        // twice; different sizes are genuinely different files and both are
-        // kept (the transfer protocol addresses files by index, not name).
-        const duplicate = next.some(
-          (f) => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified,
-        );
-        if (duplicate) continue;
-        next.push(file);
-      }
-      return next;
-    });
-
-    setNotice(rejected.length > 0 ? `Skipped: ${[...new Set(rejected)].join('; ')}.` : null);
-  }, []);
-
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault();
-      dragDepth.current = 0;
-      setDragging(false);
-      if (event.dataTransfer?.files?.length) addFiles(event.dataTransfer.files);
-    },
-    [addFiles],
-  );
-
-  const removeAt = useCallback((index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-  }, []);
-
-  const start = useCallback(() => {
-    if (files.length === 0) return;
-    clearStagedFiles();
-    stageFiles(files);
-    navigate('/send');
-  }, [files, navigate]);
-
   return (
     <div className="flex flex-col">
-      {/* ---------------------------------------------------------------- hero */}
-      <section className="relative isolate pt-10 sm:pt-16">
-        <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-80 bg-grid opacity-60" aria-hidden="true" />
+      <section className="relative isolate pt-12 sm:pt-20 lg:pt-32 pb-16 lg:pb-24">
+        <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[500px] bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(99,102,241,0.15),transparent)]" aria-hidden="true" />
+        <div className="pointer-events-none absolute right-0 top-20 -z-10 size-[600px] bg-brand/10 blur-[120px] rounded-full" aria-hidden="true" />
 
-        <div className="mx-auto max-w-3xl text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-raised px-3 py-1.5 text-xs font-semibold text-ink-muted shadow-soft">
-            <span className="size-1.5 rounded-full bg-success" aria-hidden="true" />
-            Peer-to-peer · no account · no upload
-          </span>
+        <div className="mx-auto grid max-w-7xl gap-16 px-4 sm:px-6 lg:grid-cols-[1fr_1fr] lg:gap-8 lg:items-center">
+          
+          <div className="flex flex-col items-start text-left">
+            <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-raised/50 px-4 py-1.5 text-xs font-semibold text-ink shadow-soft backdrop-blur-sm">
+              <span className="size-2 rounded-full bg-success animate-pulse" aria-hidden="true" />
+              Direct P2P Transfer <span className="text-ink-muted ml-1">Your files stay on your devices &gt;</span>
+            </span>
 
-          <h1 className="mt-6 text-4xl font-extrabold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-7xl">
-            Move files.
-            <br className="hidden sm:block" /> <span className="text-gradient drop-shadow-sm">Not through the cloud.</span>
-          </h1>
+            <h1 className="mt-8 text-5xl font-extrabold leading-[1.05] tracking-tight text-ink sm:text-6xl lg:text-7xl">
+              Move files.<br/>
+              <span className="text-gradient drop-shadow-sm">Not through the cloud.</span>
+            </h1>
 
-          <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-ink-muted sm:text-lg">
-            Droply opens a direct, encrypted connection between two browsers. Pick your files, share
-            a six-character code, and they transfer device to device — never through a file server.
-          </p>
+            <p className="mt-6 max-w-lg text-lg leading-relaxed text-ink-muted">
+              Droply lets you share files instantly between devices with a secure, direct connection. No accounts. No uploads. Just you and the people you trust.
+            </p>
 
-          <div className="mx-auto mt-12 mb-12 flex max-w-2xl items-center justify-center px-4 relative">
-            {/* Ambient background glow */}
-            <div className="absolute inset-0 bg-brand/10 blur-[60px] rounded-full" aria-hidden="true" />
-            
-            <div className="relative z-10 flex items-center w-full justify-between max-w-md">
-              {/* Laptop Node */}
-              <div className="relative flex flex-col items-center">
-                <div className="grid size-20 place-items-center rounded-3xl border border-white/10 bg-surface/50 backdrop-blur-xl shadow-[0_0_30px_rgba(37,99,235,0.15)] ring-1 ring-inset ring-white/10">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-brand drop-shadow-md">
-                    <rect width="18" height="12" x="3" y="4" rx="2" ry="2"/>
-                    <line x1="2" x2="22" y1="20" y2="20"/>
-                  </svg>
-                </div>
-                <div className="absolute -bottom-2 size-4 rounded-full bg-brand/20 blur-sm animate-pulse" />
-              </div>
-              
-              {/* Animated Connection Track */}
-              <div className="flex h-16 flex-1 items-center justify-center relative mx-4">
-                <svg width="100%" height="40" viewBox="0 0 200 40" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" className="overflow-visible">
-                  {/* Outer glow track */}
-                  <line x1="0" y1="20" x2="200" y2="20" stroke="currentColor" strokeWidth="8" strokeLinecap="round" className="text-brand/5 blur-sm" />
-                  {/* Dashed inner track */}
-                  <line x1="0" y1="20" x2="200" y2="20" stroke="currentColor" strokeWidth="2" strokeDasharray="4 8" strokeLinecap="round" className="text-brand/30" />
-                  
-                  {/* Glowing Data Packets */}
-                  <g style={{ animation: 'indeterminate 3s ease-in-out infinite' }}>
-                    <rect x="0" y="12" width="24" height="16" rx="4" fill="currentColor" className="text-brand" />
-                    <rect x="-4" y="8" width="32" height="24" rx="8" fill="currentColor" className="text-brand blur-md opacity-60" />
-                  </g>
-                  <g style={{ animation: 'indeterminate 3s ease-in-out infinite 1.5s' }}>
-                    <rect x="0" y="14" width="16" height="12" rx="3" fill="currentColor" className="text-cyan" />
-                    <rect x="-4" y="10" width="24" height="20" rx="6" fill="currentColor" className="text-cyan blur-md opacity-60" />
-                  </g>
-                </svg>
-              </div>
+            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-start">
+              <Link
+                to="/send"
+                className="inline-flex h-14 w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand to-brand-hover shadow-brand-glow hover:scale-[1.02] transition-transform px-8 text-base font-semibold text-white"
+              >
+                <Upload className="size-5" aria-hidden="true" />
+                Send files <ArrowRight className="size-4 ml-1" aria-hidden="true" />
+              </Link>
+              <Link
+                to="/receive"
+                className="inline-flex h-14 w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-line bg-transparent px-8 text-base font-semibold text-ink transition-colors hover:bg-surface-hover active:scale-95"
+              >
+                <Download className="size-5" aria-hidden="true" />
+                Receive files <ArrowRight className="size-4 ml-1" aria-hidden="true" />
+              </Link>
+            </div>
 
-              {/* Phone Node */}
-              <div className="relative flex flex-col items-center">
-                <div className="grid size-20 place-items-center rounded-3xl border border-white/10 bg-surface/50 backdrop-blur-xl shadow-[0_0_30px_rgba(8,145,178,0.15)] ring-1 ring-inset ring-white/10">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-cyan drop-shadow-md">
-                    <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
-                    <path d="M12 18h.01"/>
-                  </svg>
-                </div>
-                <div className="absolute -bottom-2 size-4 rounded-full bg-cyan/20 blur-sm animate-pulse" />
-              </div>
+            <div className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm font-medium text-ink-subtle">
+              <span className="flex items-center gap-2"><UserCheck className="size-4 text-brand" /> No account required</span>
+              <span className="flex items-center gap-2"><ShieldCheck className="size-4 text-brand" /> End-to-end encrypted</span>
+              <span className="flex items-center gap-2"><Link2 className="size-4 text-brand" /> Works on all devices</span>
             </div>
           </div>
 
-          <div className="mt-4 flex flex-col items-center justify-center gap-4 sm:flex-row z-20 relative">
-            <Button
-              size="lg"
-              onClick={() => document.getElementById('send-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-            >
-              <Upload className="size-4" aria-hidden="true" />
-              Send files
-            </Button>
-            <Link
-              to="/receive"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-line bg-surface-raised px-6 text-base font-semibold text-ink shadow-soft transition-colors hover:bg-surface-hover"
-            >
-              <Download className="size-4" aria-hidden="true" />
-              Receive files
-            </Link>
+          <div className="relative w-full max-w-lg mx-auto lg:max-w-none">
+            <div className="relative w-full aspect-[4/3] flex items-center justify-center">
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 500 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 120 280 C 200 350, 350 200, 420 180" stroke="url(#gradientSwoosh)" strokeWidth="6" strokeLinecap="round" className="opacity-80" />
+                <path d="M 120 280 C 200 350, 350 200, 420 180" stroke="#6366f1" strokeWidth="2" strokeDasharray="8 8" className="opacity-40" style={{ animation: 'dash-flow 1.5s linear infinite' }} />
+                
+                <defs>
+                  <linearGradient id="gradientSwoosh" x1="120" y1="280" x2="420" y2="180" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#6366f1" stopOpacity="0.2"/>
+                    <stop offset="50%" stopColor="#22d3ee" stopOpacity="1"/>
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0.2"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+
+              <div className="absolute left-[10%] bottom-[15%] flex flex-col items-center transform -rotate-6">
+                <div className="relative flex flex-col items-center justify-center w-56 h-40 bg-surface-raised rounded-xl border border-line shadow-float backdrop-blur-md z-10">
+                  <div className="w-full h-8 bg-surface-sunken border-b border-line flex items-center px-3 rounded-t-xl">
+                    <Logo size={16} /> <span className="ml-2 text-xs font-bold text-ink">Droply</span>
+                  </div>
+                  <div className="flex-1 flex flex-col items-center justify-center w-full relative">
+                    <div className="size-16 rounded-full bg-brand-soft flex items-center justify-center mb-2 shadow-brand-glow">
+                      <Upload className="size-8 text-brand" />
+                    </div>
+                    <span className="text-xs font-semibold text-ink">Sending files...</span>
+                    <div className="w-3/4 h-1.5 bg-line rounded-full mt-3 overflow-hidden">
+                      <div className="h-full bg-brand w-[78%] rounded-full" />
+                    </div>
+                  </div>
+                </div>
+                <div className="w-64 h-3 bg-line-strong rounded-b-xl -mt-1 z-0 shadow-lg" />
+              </div>
+
+              <div className="absolute left-[45%] top-[40%] bg-surface-raised border border-line rounded-lg p-2 shadow-float z-20 animate-[float-y_3s_ease-in-out_infinite]">
+                <FolderOpen className="size-6 text-brand" />
+              </div>
+              <div className="absolute left-[60%] top-[30%] bg-surface-raised border border-line rounded-lg p-2 shadow-float z-20 animate-[float-y_4s_ease-in-out_infinite_0.5s]">
+                <DownloadCloud className="size-6 text-cyan" />
+              </div>
+
+              <div className="absolute right-[5%] top-[10%] transform rotate-6">
+                <div className="relative flex flex-col w-32 h-64 bg-surface-raised rounded-[2rem] border-4 border-line-strong shadow-float backdrop-blur-md z-10 overflow-hidden">
+                  <div className="w-12 h-1 bg-line absolute top-2 left-1/2 -translate-x-1/2 rounded-full" />
+                  <div className="mt-8 flex flex-col items-center justify-center px-2">
+                    <div className="size-12 rounded-full bg-cyan-soft flex items-center justify-center mb-3 shadow-brand-glow">
+                      <Download className="size-6 text-cyan" />
+                    </div>
+                    <span className="text-[10px] font-semibold text-ink">Receiving...</span>
+                    <div className="w-full h-1 bg-line rounded-full mt-2 overflow-hidden">
+                      <div className="h-full bg-cyan w-[78%] rounded-full" />
+                    </div>
+                    <div className="w-full mt-4 space-y-2">
+                      <div className="w-full h-6 bg-surface-sunken rounded flex items-center px-2"><div className="size-3 rounded bg-brand/50 mr-2"/><div className="h-1.5 w-10 bg-line rounded"/></div>
+                      <div className="w-full h-6 bg-surface-sunken rounded flex items-center px-2"><div className="size-3 rounded bg-cyan/50 mr-2"/><div className="h-1.5 w-12 bg-line rounded"/></div>
+                      <div className="w-full h-6 bg-surface-sunken rounded flex items-center px-2"><div className="size-3 rounded bg-brand/50 mr-2"/><div className="h-1.5 w-8 bg-line rounded"/></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* -------------------------------------------------------- picker panel */}
-      <section id="send-panel" className="mt-14 scroll-mt-24 sm:mt-20">
-        <Panel className="p-4 sm:p-6">
-          <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr]">
-            {/* Drop zone */}
-            <div
-              onDrop={onDrop}
-              onDragOver={(event) => event.preventDefault()}
-              onDragEnter={(event) => {
-                event.preventDefault();
-                dragDepth.current += 1;
-                setDragging(true);
-              }}
-              onDragLeave={(event) => {
-                event.preventDefault();
-                dragDepth.current = Math.max(0, dragDepth.current - 1);
-                if (dragDepth.current === 0) setDragging(false);
-              }}
-              className={cn(
-                'flex flex-col items-center justify-center rounded-card border-2 border-dashed px-6 py-10 text-center transition-colors duration-150',
-                dragging
-                  ? 'border-brand bg-brand-soft'
-                  : 'border-line bg-surface-sunken hover:border-line-strong',
-              )}
-            >
-              <span
-                className={cn(
-                  'grid size-14 place-items-center rounded-2xl transition-colors',
-                  dragging ? 'bg-brand text-white' : 'bg-surface-raised text-brand shadow-soft',
-                )}
-              >
-                <UploadCloud className="size-7" aria-hidden="true" />
-              </span>
-
-              <h2 className="mt-4 text-lg font-bold text-ink">
-                {dragging ? 'Drop to add' : 'Drop files here'}
-              </h2>
-              <p className="mt-1 text-sm text-ink-muted">or browse your device</p>
-
-              {/* A real label+input pair: works with the keyboard and with
-                  assistive technology, unlike a button that clicks a hidden
-                  input. */}
-              <label
-                htmlFor={inputId}
-                className="mt-5 inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-brand-glow transition-colors hover:bg-brand-hover"
-              >
-                <FolderOpen className="size-4" aria-hidden="true" />
-                Choose files
-              </label>
-              <input
-                id={inputId}
-                ref={inputRef}
-                type="file"
-                multiple
-                className="sr-only"
-                onChange={(event) => {
-                  if (event.target.files?.length) addFiles(event.target.files);
-                  // Reset so re-picking the same file fires `change` again.
-                  event.target.value = '';
-                }}
-              />
-
-              <p className="mt-4 text-xs text-ink-subtle">
-                Up to {MAX_FILES} files · {formatBytes(MAX_FILE_BYTES)} each
-              </p>
-            </div>
-
-            {/* Selection */}
-            <div className="flex flex-col rounded-card border border-line bg-surface-sunken">
-              <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-ink">
-                    {files.length === 0
-                      ? 'Nothing selected'
-                      : `${files.length} ${files.length === 1 ? 'file' : 'files'}`}
-                  </p>
-                  <p className="text-xs text-ink-muted tabular">{formatBytes(totalSize)} total</p>
-                </div>
-                {files.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={() => setFiles([])}>
-                    <Trash2 className="size-3.5" aria-hidden="true" />
-                    Clear
-                  </Button>
-                )}
-              </div>
-
-              <div className="min-h-[9rem] flex-1 overflow-y-auto p-2 sm:max-h-56">
-                {files.length === 0 ? (
-                  <p className="flex h-full min-h-[8rem] items-center justify-center px-6 text-center text-sm text-ink-subtle">
-                    Files you choose appear here before anything is shared.
-                  </p>
-                ) : (
-                  <ul className="flex flex-col gap-1.5">
-                    {files.map((file, index) => (
-                      <li
-                        key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
-                        className="flex items-center gap-3 rounded-xl border border-line bg-surface-raised px-3 py-2"
-                      >
-                        <FileTypeIcon filename={file.name} mimeType={file.type} size="sm" />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-ink" title={file.name}>
-                            {file.name}
-                          </p>
-                          <p className="text-xs text-ink-muted tabular">{formatBytes(file.size)}</p>
-                        </div>
-                        <IconButton
-                          label={`Remove ${file.name}`}
-                          onClick={() => removeAt(index)}
-                          className="size-8 rounded-lg hover:bg-danger-soft hover:text-danger"
-                        >
-                          <X className="size-4" aria-hidden="true" />
-                        </IconButton>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <div className="border-t border-line p-3">
-                <Button size="lg" fullWidth disabled={files.length === 0} onClick={start}>
-                  <Link2 className="size-4" aria-hidden="true" />
-                  Create a transfer room
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </Button>
-              </div>
+      <section className="mt-8 sm:mt-12 mb-20 px-4 sm:px-6 mx-auto max-w-7xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div className="bg-surface-raised rounded-2xl p-5 flex items-center gap-4 border border-line shadow-sm">
+            <Users className="size-8 text-brand shrink-0" />
+            <div>
+              <h4 className="text-sm font-bold text-ink">100% Private</h4>
+              <p className="text-xs text-ink-muted">Files never touch a server</p>
             </div>
           </div>
-
-          {notice && (
-            <Alert tone="warning" className="mt-4">
-              {notice}
-            </Alert>
-          )}
-        </Panel>
-      </section>
-
-      {/* ---------------------------------------------------------- how it works */}
-      <section id="how-it-works" className="mt-20 scroll-mt-24 sm:mt-24">
-        <h2 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">How it works</h2>
-        <p className="mt-2 max-w-xl text-ink-muted">
-          Three steps, and no sign-up anywhere in them.
-        </p>
-
-        <ol className="mt-8 grid gap-4 md:grid-cols-3">
-          {STEPS.map(({ Icon, title, body }, index) => (
-            <li key={title} className="panel rounded-card p-5">
-              <div className="flex items-center justify-between">
-                <span className="grid size-11 place-items-center rounded-xl bg-brand-soft text-brand">
-                  <Icon className="size-5" aria-hidden="true" />
-                </span>
-                <span className="font-mono text-sm font-bold text-ink-subtle">
-                  0{index + 1}
-                </span>
-              </div>
-              <h3 className="mt-4 text-base font-bold text-ink">{title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{body}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      {/* ------------------------------------------------------------- privacy */}
-      <section className="mt-16 sm:mt-20">
-        <div className="grid gap-4 md:grid-cols-3">
-          {GUARANTEES.map(({ Icon, title, body }) => (
-            <div key={title} className="panel rounded-card p-5">
-              <span className="grid size-11 place-items-center rounded-xl bg-success-soft text-success">
-                <Icon className="size-5" aria-hidden="true" />
-              </span>
-              <h3 className="mt-4 text-base font-bold text-ink">{title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{body}</p>
+          <div className="bg-surface-raised rounded-2xl p-5 flex items-center gap-4 border border-line shadow-sm">
+            <ArrowRight className="size-8 text-cyan shrink-0" />
+            <div>
+              <h4 className="text-sm font-bold text-ink">Blazing Fast</h4>
+              <p className="text-xs text-ink-muted">Direct device-to-device</p>
             </div>
-          ))}
+          </div>
+          <div className="bg-surface-raised rounded-2xl p-5 flex items-center gap-4 border border-line shadow-sm">
+            <CheckCircle2 className="size-8 text-brand shrink-0" />
+            <div>
+              <h4 className="text-sm font-bold text-ink">Works Everywhere</h4>
+              <p className="text-xs text-ink-muted">Phone, tablet, laptop</p>
+            </div>
+          </div>
+          <div className="bg-surface-raised rounded-2xl p-5 flex items-center gap-4 border border-line shadow-sm">
+            <ShieldCheck className="size-8 text-cyan shrink-0" />
+            <div>
+              <h4 className="text-sm font-bold text-ink">Open Source Ready</h4>
+              <p className="text-xs text-ink-muted">Transparent</p>
+            </div>
+          </div>
         </div>
 
-        <Alert tone="neutral" className="mt-4">
-          Droply is honest about its limits: a small signalling service introduces the two browsers
-          to each other, so it does see a room code and connection details. And on networks that
-          block direct connections, a transfer needs a TURN relay to work at all.{' '}
-          <Link to="/privacy" className="font-semibold text-brand hover:underline">
-            Read the full privacy model
-          </Link>
-          .
-        </Alert>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-surface-raised border border-line shadow-sm rounded-[2rem] p-6 flex flex-col">
+            <div className="size-12 rounded-2xl bg-brand-soft text-brand flex items-center justify-center mb-4">
+              <ArrowRight className="size-6" />
+            </div>
+            <h3 className="text-lg font-bold text-ink mb-2">Direct Transfer</h3>
+            <p className="text-sm text-ink-muted leading-relaxed">Your files move directly between devices using WebRTC. No cloud storage, no intermediaries.</p>
+          </div>
+          <div className="bg-surface-raised border border-cyan/20 shadow-sm rounded-[2rem] p-6 flex flex-col bg-gradient-to-b from-surface-raised to-cyan-soft/10">
+            <div className="size-12 rounded-2xl bg-success-soft text-success flex items-center justify-center mb-4">
+              <ShieldAlert className="size-6" />
+            </div>
+            <h3 className="text-lg font-bold text-ink mb-2">No Account Required</h3>
+            <p className="text-sm text-ink-muted leading-relaxed">Start sharing instantly. No sign up, no personal data, no unnecessary friction.</p>
+          </div>
+          <div className="bg-surface-raised border border-line shadow-sm rounded-[2rem] p-6 flex flex-col">
+            <div className="size-12 rounded-2xl bg-brand-soft text-brand flex items-center justify-center mb-4">
+              <Upload className="size-6" />
+            </div>
+            <h3 className="text-lg font-bold text-ink mb-2">Share Anything</h3>
+            <p className="text-sm text-ink-muted leading-relaxed">Send photos, videos, documents, folders and more of any size, across any device.</p>
+          </div>
+          <div className="bg-surface-raised border border-line shadow-sm rounded-[2rem] p-6 flex flex-col">
+            <div className="size-12 rounded-2xl bg-warning-soft text-warning flex items-center justify-center mb-4">
+              <ShieldCheck className="size-6" />
+            </div>
+            <h3 className="text-lg font-bold text-ink mb-2">Built for Privacy</h3>
+            <p className="text-sm text-ink-muted leading-relaxed">End-to-end encrypted connections keep your files safe and in your control at all times.</p>
+          </div>
+        </div>
       </section>
     </div>
   );
