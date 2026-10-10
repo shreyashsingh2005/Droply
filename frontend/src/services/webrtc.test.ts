@@ -239,6 +239,8 @@ afterEach(() => {
 
 import * as signalingModule from './signaling';
 import { PeerConnection, type PeerFailure, type PeerState } from './webrtc';
+// We need to reset cached config manually by casting as we didn't export a reset method
+import * as webrtcModule from './webrtc';
 
 const transports = (signalingModule as unknown as { __transports: FakeSignalingShape[] })
   .__transports;

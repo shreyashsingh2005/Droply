@@ -88,7 +88,7 @@ const FALLBACK_ICE_SERVERS: RTCIceServer[] = [
   { urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] },
 ];
 
-let cachedIceConfig: { iceServers: RTCIceServer[]; turn: boolean } | null = null;
+export let cachedIceConfig: { iceServers: RTCIceServer[]; turn: boolean } | null = null;
 
 /**
  * The DTLS fingerprint in an SDP identifies a peer's connection *generation*.
@@ -204,10 +204,21 @@ export class PeerConnection {
     if (this.destroyed || this.state !== 'idle') return;
     this.setState('signaling');
 
-    const config = await fetchIceConfig();
-    if (this.destroyed) return;
-    this.iceServers = config.iceServers;
-    this.turnAvailable = config.turn;
+    try {
+      const config = await fetchIceConfig();
+      if (this.destroyed) return;
+      this.iceServers = config.iceServers;
+      this.turnAvailable = config.turn;
+    } catch (err) {
+      log.webrtc.error('ice config fetch failed', err);
+      this.fail({
+        state: 'failed',
+        code: 'signaling-unreachable',
+        message: 'Could not fetch connection configuration from the server. Check your internet connection.',
+        retryable: true,
+      });
+      return;
+    }
 
     this.signaling = new SignalingService(this.roomId, this.role, {
       onFrame: (frame) => this.onFrame(frame),
