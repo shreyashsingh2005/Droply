@@ -131,40 +131,66 @@ export function Home() {
             Peer-to-peer · no account · no upload
           </span>
 
-          <h1 className="mt-6 text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-6xl">
+          <h1 className="mt-6 text-4xl font-extrabold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-7xl">
             Your files. Your devices.
-            <br className="hidden sm:block" /> <span className="text-gradient">Directly.</span>
+            <br className="hidden sm:block" /> <span className="text-gradient drop-shadow-sm">One direct connection.</span>
           </h1>
 
-          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-ink-muted sm:text-lg">
+          <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-ink-muted sm:text-lg">
             Droply opens a direct, encrypted connection between two browsers. Pick your files, share
             a six-character code, and they transfer device to device — never through a file server.
           </p>
 
-          <div className="mx-auto mt-10 mb-10 flex max-w-md items-center justify-center gap-4 px-4 opacity-90 sm:gap-6">
-            <div className="relative grid size-16 shrink-0 place-items-center rounded-2xl border border-line bg-surface-raised shadow-soft sm:size-20">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-ink-muted">
-                <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
-                <path d="M12 18h.01"/>
-              </svg>
-            </div>
+          <div className="mx-auto mt-12 mb-12 flex max-w-2xl items-center justify-center px-4 relative">
+            {/* Ambient background glow */}
+            <div className="absolute inset-0 bg-brand/10 blur-[60px] rounded-full" aria-hidden="true" />
             
-            <div className="flex h-12 flex-1 items-center justify-center overflow-hidden">
-              <svg width="100%" height="24" viewBox="0 0 100 24" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-                <line x1="0" y1="12" x2="100" y2="12" stroke="currentColor" strokeWidth="2" strokeDasharray="6 6" className="text-line-strong" style={{ animation: 'dash-flow 1s linear infinite' }} />
-                <rect x="35" y="4" width="30" height="16" rx="4" fill="currentColor" className="text-brand shadow-brand-glow" style={{ animation: 'indeterminate 2.5s ease-in-out infinite' }} />
-              </svg>
-            </div>
+            <div className="relative z-10 flex items-center w-full justify-between max-w-md">
+              {/* Laptop Node */}
+              <div className="relative flex flex-col items-center">
+                <div className="grid size-20 place-items-center rounded-3xl border border-white/10 bg-surface/50 backdrop-blur-xl shadow-[0_0_30px_rgba(37,99,235,0.15)] ring-1 ring-inset ring-white/10">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-brand drop-shadow-md">
+                    <rect width="18" height="12" x="3" y="4" rx="2" ry="2"/>
+                    <line x1="2" x2="22" y1="20" y2="20"/>
+                  </svg>
+                </div>
+                <div className="absolute -bottom-2 size-4 rounded-full bg-brand/20 blur-sm animate-pulse" />
+              </div>
+              
+              {/* Animated Connection Track */}
+              <div className="flex h-16 flex-1 items-center justify-center relative mx-4">
+                <svg width="100%" height="40" viewBox="0 0 200 40" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" className="overflow-visible">
+                  {/* Outer glow track */}
+                  <line x1="0" y1="20" x2="200" y2="20" stroke="currentColor" strokeWidth="8" strokeLinecap="round" className="text-brand/5 blur-sm" />
+                  {/* Dashed inner track */}
+                  <line x1="0" y1="20" x2="200" y2="20" stroke="currentColor" strokeWidth="2" strokeDasharray="4 8" strokeLinecap="round" className="text-brand/30" />
+                  
+                  {/* Glowing Data Packets */}
+                  <g style={{ animation: 'indeterminate 3s ease-in-out infinite' }}>
+                    <rect x="0" y="12" width="24" height="16" rx="4" fill="currentColor" className="text-brand" />
+                    <rect x="-4" y="8" width="32" height="24" rx="8" fill="currentColor" className="text-brand blur-md opacity-60" />
+                  </g>
+                  <g style={{ animation: 'indeterminate 3s ease-in-out infinite 1.5s' }}>
+                    <rect x="0" y="14" width="16" height="12" rx="3" fill="currentColor" className="text-cyan" />
+                    <rect x="-4" y="10" width="24" height="20" rx="6" fill="currentColor" className="text-cyan blur-md opacity-60" />
+                  </g>
+                </svg>
+              </div>
 
-            <div className="relative grid size-16 shrink-0 place-items-center rounded-2xl border border-line bg-surface-raised shadow-soft sm:size-20">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-ink-muted">
-                <rect width="18" height="12" x="3" y="4" rx="2" ry="2"/>
-                <line x1="2" x2="22" y1="20" y2="20"/>
-              </svg>
+              {/* Phone Node */}
+              <div className="relative flex flex-col items-center">
+                <div className="grid size-20 place-items-center rounded-3xl border border-white/10 bg-surface/50 backdrop-blur-xl shadow-[0_0_30px_rgba(8,145,178,0.15)] ring-1 ring-inset ring-white/10">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-cyan drop-shadow-md">
+                    <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
+                    <path d="M12 18h.01"/>
+                  </svg>
+                </div>
+                <div className="absolute -bottom-2 size-4 rounded-full bg-cyan/20 blur-sm animate-pulse" />
+              </div>
             </div>
           </div>
 
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="mt-4 flex flex-col items-center justify-center gap-4 sm:flex-row z-20 relative">
             <Button
               size="lg"
               onClick={() => document.getElementById('send-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
