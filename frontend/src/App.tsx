@@ -247,7 +247,7 @@ export default function App() {
         <OfflineBanner />
         <Header preference={preference} onThemeChange={setPreference} />
 
-        <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 pb-10 sm:px-6 mb-safe-nav md:mb-0">
+        <main id="main" className="w-full flex-1 flex flex-col pb-10 mb-safe-nav md:mb-0">
           <RoutedContent />
         </main>
 

@@ -134,7 +134,7 @@ export function History() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-3xl py-8 sm:py-10">
+    <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-10">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2.5 text-2xl font-bold text-ink sm:text-3xl">

@@ -373,7 +373,7 @@ export function Send() {
   /* ----------------------------------------------------------------------- */
   if (phase === 'no-files') {
     return (
-      <div className="mx-auto w-full max-w-2xl py-8 sm:py-12 px-4">
+      <div className="mx-auto w-full max-w-2xl px-4 sm:px-6 py-8 sm:py-12">
         <h1 className="text-3xl font-extrabold text-ink mb-8">Send files</h1>
         <Panel className="p-4 sm:p-6 shadow-float bg-surface-overlay/80 backdrop-blur-xl border-white/5">
           <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr]">
@@ -496,7 +496,7 @@ export function Send() {
 
 
   return (
-    <div className="mx-auto w-full max-w-2xl py-8 sm:py-10">
+    <div className="mx-auto w-full max-w-2xl px-4 sm:px-6 py-8 sm:py-10">
       <StatusAnnouncer message={announcement} />
 
       <Panel>

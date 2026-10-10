@@ -85,7 +85,7 @@ const SECTIONS = [
 
 export function Privacy() {
   return (
-    <div className="mx-auto w-full max-w-3xl py-8 sm:py-10">
+    <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-10">
       <header className="mb-8">
         <h1 className="flex items-center gap-2.5 text-2xl font-bold text-ink sm:text-3xl">
           <ShieldCheck className="size-7 text-brand" aria-hidden="true" />
