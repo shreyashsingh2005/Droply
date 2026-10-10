@@ -132,8 +132,8 @@ export function Home() {
           </span>
 
           <h1 className="mt-6 text-4xl font-extrabold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-7xl">
-            Your files. Your devices.
-            <br className="hidden sm:block" /> <span className="text-gradient drop-shadow-sm">One direct connection.</span>
+            Move files.
+            <br className="hidden sm:block" /> <span className="text-gradient drop-shadow-sm">Not through the cloud.</span>
           </h1>
 
           <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-ink-muted sm:text-lg">
