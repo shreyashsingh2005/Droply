@@ -132,14 +132,37 @@ export function Home() {
           </span>
 
           <h1 className="mt-6 text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-6xl">
-            Move files between your devices,
-            <br className="hidden sm:block" /> <span className="text-gradient">straight across</span>
+            Your files. Your devices.
+            <br className="hidden sm:block" /> <span className="text-gradient">Directly.</span>
           </h1>
 
           <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-ink-muted sm:text-lg">
             Droply opens a direct, encrypted connection between two browsers. Pick your files, share
             a six-character code, and they transfer device to device — never through a file server.
           </p>
+
+          <div className="mx-auto mt-10 mb-10 flex max-w-md items-center justify-center gap-4 px-4 opacity-90 sm:gap-6">
+            <div className="relative grid size-16 shrink-0 place-items-center rounded-2xl border border-line bg-surface-raised shadow-soft sm:size-20">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-ink-muted">
+                <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
+                <path d="M12 18h.01"/>
+              </svg>
+            </div>
+            
+            <div className="flex h-12 flex-1 items-center justify-center overflow-hidden">
+              <svg width="100%" height="24" viewBox="0 0 100 24" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                <line x1="0" y1="12" x2="100" y2="12" stroke="currentColor" strokeWidth="2" strokeDasharray="6 6" className="text-line-strong" style={{ animation: 'dash-flow 1s linear infinite' }} />
+                <rect x="35" y="4" width="30" height="16" rx="4" fill="currentColor" className="text-brand shadow-brand-glow" style={{ animation: 'indeterminate 2.5s ease-in-out infinite' }} />
+              </svg>
+            </div>
+
+            <div className="relative grid size-16 shrink-0 place-items-center rounded-2xl border border-line bg-surface-raised shadow-soft sm:size-20">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-ink-muted">
+                <rect width="18" height="12" x="3" y="4" rx="2" ry="2"/>
+                <line x1="2" x2="22" y1="20" y2="20"/>
+              </svg>
+            </div>
+          </div>
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button
