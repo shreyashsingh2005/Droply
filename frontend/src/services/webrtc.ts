@@ -390,9 +390,9 @@ export class PeerConnection {
     // The receiver has nothing to do but wait for the offer.
   }
 
-  private buildPeer(): void {
+  private buildPeer(preserveCandidates = false): void {
     this.teardownPeer();
-    this.pendingCandidates = [];
+    if (!preserveCandidates) { this.pendingCandidates = []; }
 
     const pc = new RTCPeerConnection({
       iceServers: this.iceServers,
@@ -532,6 +532,7 @@ export class PeerConnection {
     const rebuilt = incoming !== null && incoming !== this.remoteFingerprint;
 
     if (!this.negotiating || rebuilt) {
+      const isFirstNegotiation = !this.negotiating && !rebuilt;
       if (!this.negotiating) {
         // Offer arrived before our presence notification; treat it as the
         // trigger so we never deadlock on message ordering.
@@ -543,7 +544,7 @@ export class PeerConnection {
       this.clearNegotiationTimeout();
       this.setState('negotiating');
       this.armNegotiationTimeout();
-      this.buildPeer();
+      this.buildPeer(isFirstNegotiation);
     }
     const pc = this.pc;
     if (!pc) return;
