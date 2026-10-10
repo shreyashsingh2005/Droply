@@ -4,6 +4,8 @@ import './index.css';
 import App from './App';
 import { log } from './lib/logger';
 
+console.log('Droply v2.0 Premium UI deployed successfully');
+
 /**
  * A new deployment replaces every hashed asset. A tab that was already open
  * then asks for a chunk that no longer exists, and the dynamic `import()`
