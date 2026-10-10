@@ -529,7 +529,7 @@ export class PeerConnection {
     // carries the old connection's identity, so answering onto it would produce
     // an answer the sender can never complete against.
     const incoming = dtlsFingerprint(sdp.sdp);
-    const rebuilt = incoming !== null && incoming !== this.remoteFingerprint;
+    const rebuilt = incoming !== null && this.remoteFingerprint !== null && incoming !== this.remoteFingerprint;
 
     if (!this.negotiating || rebuilt) {
       if (!this.negotiating) {
