@@ -80,7 +80,7 @@ export function Home() {
               <div className="absolute left-[10%] bottom-[15%] flex flex-col items-center transform -rotate-6">
                 <div className="relative flex flex-col items-center justify-center w-56 h-40 bg-surface-raised rounded-xl border border-line shadow-float backdrop-blur-md z-10">
                   <div className="w-full h-8 bg-surface-sunken border-b border-line flex items-center px-3 rounded-t-xl">
-                    <Logo size={16} /> <span className="ml-2 text-xs font-bold text-ink">Droply</span>
+                    <Logo size={16} withWordmark={false} /> <span className="ml-2 text-xs font-bold text-ink">Droply</span>
                   </div>
                   <div className="flex-1 flex flex-col items-center justify-center w-full relative">
                     <div className="size-16 rounded-full bg-brand-soft flex items-center justify-center mb-2 shadow-brand-glow">

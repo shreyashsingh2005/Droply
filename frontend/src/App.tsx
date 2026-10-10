@@ -105,8 +105,7 @@ function Header({
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
         <NavLink to="/" className="shrink-0 rounded-lg flex items-center gap-2" aria-label="Droply home">
           <Logo size={32} />
-          <span className="text-xl font-bold tracking-tight text-ink hidden sm:block">Droply</span>
-        </NavLink>
+                  </NavLink>
 
         <nav aria-label="Main" className="hidden items-center gap-1 md:flex rounded-full border border-line/50 bg-surface-raised/40 p-1.5 backdrop-blur-md shadow-sm">
           {[...PRIMARY_NAV, ...SECONDARY_NAV].map(({ to, label, Icon, end }) => (
