@@ -51,10 +51,7 @@
       (function () {
         try {
           var stored = localStorage.getItem('droply:theme');
-          var dark =
-            stored === 'dark' ||
-            (stored !== 'light' &&
-              !(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches));
+          var dark = stored !== 'light';
           var root = document.documentElement;
           root.classList.toggle('dark', dark);
           root.style.colorScheme = dark ? 'dark' : 'light';
@@ -70,10 +67,10 @@
       /* Paint the page background immediately, so there is no white flash
          before the stylesheet and the app bundle arrive. */
       html {
-        background: #f6f8fc;
+        background: #040a18;
       }
       html.dark {
-        background: #070d18;
+        background: #040a18;
       }
       #root {
         min-height: 100dvh;

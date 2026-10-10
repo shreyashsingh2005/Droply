@@ -25,7 +25,7 @@ function readStored(): ThemePreference {
   } catch {
     /* storage blocked; fall back to system */
   }
-  return 'system';
+  return 'dark'; // Force cinematic dark as default
 }
 
 function systemTheme(): ResolvedTheme {
@@ -48,7 +48,7 @@ export function useTheme(): {
   setPreference: (next: ThemePreference) => void;
   toggle: () => void;
 } {
-  const [preference, setPreferenceState] = useState<ThemePreference>(readStored);
+  const [preference, setPreferenceState] = useState<ThemePreference>(() => readStored() === 'system' ? 'dark' : readStored());
   const [system, setSystem] = useState<ResolvedTheme>(systemTheme);
 
   // Keep following the OS while the preference is `system`.
