@@ -112,8 +112,8 @@ function Header({
   onThemeChange: (next: ThemePreference) => void;
 }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-white/5 bg-surface/85 pt-safe backdrop-blur-xl">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+    <header className="sticky top-0 z-40 border-b border-line dark:border-white/5 bg-surface/85 pt-safe backdrop-blur-xl">
+      <div className="mx-auto flex h-20 max-w-7xl 2xl:max-w-screen-2xl items-center justify-between gap-4 px-4 sm:px-6">
         <NavLink to="/" className="shrink-0 rounded-lg flex items-center gap-2" aria-label="Droply home">
           <Logo size={32} />
                   </NavLink>

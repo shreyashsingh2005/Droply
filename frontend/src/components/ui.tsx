@@ -79,7 +79,7 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary:
-    'bg-brand text-white shadow-brand-glow hover:bg-brand-hover active:translate-y-px disabled:shadow-none',
+    'bg-gradient-to-r from-brand to-brand-hover text-white shadow-brand-glow hover:shadow-[0_0_20px_rgba(43,92,255,0.5)] hover:-translate-y-0.5 active:translate-y-px disabled:shadow-none transition-all duration-300',
   secondary:
     'bg-surface-raised text-ink border border-line hover:bg-surface-hover hover:border-line-strong active:translate-y-px',
   ghost: 'text-ink-muted hover:text-ink hover:bg-surface-hover',

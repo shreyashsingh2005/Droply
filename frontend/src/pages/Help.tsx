@@ -134,13 +134,13 @@ function FaqList({ items }: { items: Faq[] }) {
 
 export function Help() {
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-10">
+    <div className="mx-auto w-full max-w-3xl 2xl:max-w-4xl px-4 sm:px-6 py-8 sm:py-10">
       <header className="mb-8">
-        <h1 className="flex items-center gap-2.5 text-2xl font-bold text-ink sm:text-3xl">
+        <h1 className="flex items-center gap-2.5 text-2xl 2xl:text-3xl font-bold text-ink sm:text-3xl">
           <LifeBuoy className="size-7 text-brand" aria-hidden="true" />
           Help &amp; troubleshooting
         </h1>
-        <p className="mt-3 max-w-2xl text-ink-muted">
+        <p className="mt-3 max-w-2xl 2xl:max-w-3xl 2xl:max-w-4xl text-ink-muted">
           Most problems come down to one of the two networks blocking direct connections. Start
           there.
         </p>
@@ -153,17 +153,17 @@ export function Help() {
       </Alert>
 
       <div className="flex flex-col gap-4">
-        <Panel>
+        <Panel className="bg-surface-raised/80 backdrop-blur-xl border-line dark:border-white/10 shadow-lg">
           <PanelHeader title="Connection problems" icon={<Wifi className="size-5" aria-hidden="true" />} />
           <FaqList items={CONNECTION} />
         </Panel>
 
-        <Panel>
+        <Panel className="bg-surface-raised/80 backdrop-blur-xl border-line dark:border-white/10 shadow-lg">
           <PanelHeader title="Files and downloads" icon={<HelpCircle className="size-5" aria-hidden="true" />} />
           <FaqList items={FILES} />
         </Panel>
 
-        <Panel>
+        <Panel className="bg-surface-raised/80 backdrop-blur-xl border-line dark:border-white/10 shadow-lg">
           <PanelHeader title="Devices and browsers" icon={<Smartphone className="size-5" aria-hidden="true" />} />
           <FaqList items={DEVICES} />
         </Panel>

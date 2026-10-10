@@ -401,10 +401,10 @@ export function Receive() {
   /* ----------------------------------------------------------------------- */
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 sm:px-6 py-8 sm:py-10">
+    <div className="mx-auto w-full max-w-2xl 2xl:max-w-3xl 2xl:max-w-4xl px-4 sm:px-6 py-8 sm:py-10">
       <StatusAnnouncer message={announcement} />
 
-      <Panel>
+      <Panel className="bg-surface-raised/80 backdrop-blur-xl border-line dark:border-white/10 shadow-lg ">
         <PanelHeader
           title="Receive files"
           description={
@@ -462,7 +462,7 @@ export function Receive() {
                   aria-describedby={entryError ? 'room-code-error' : 'room-code-hint'}
                   aria-invalid={entryError ? true : undefined}
                   placeholder="ABC123"
-                  className="mt-3 w-full rounded-xl border border-line bg-surface-sunken px-4 py-4 text-center font-mono text-2xl font-bold uppercase tracking-[0.3em] text-ink placeholder:text-ink-subtle/50 placeholder:tracking-[0.2em] focus:border-brand focus:bg-surface-raised sm:text-3xl"
+                  className="mt-3 w-full rounded-xl border border-line bg-surface-sunken/50 dark:bg-black/20 px-4 py-4 text-center font-mono text-2xl 2xl:text-3xl font-bold uppercase tracking-[0.3em] text-ink placeholder:text-ink-subtle/50 placeholder:tracking-[0.2em] focus:border-brand focus:bg-surface-raised sm:text-3xl"
                 />
                 {entryError && (
                   <p id="room-code-error" role="alert" className="mt-2 text-sm font-medium text-danger">
@@ -700,7 +700,7 @@ export function Receive() {
           {/* --- declined ------------------------------------------------- */}
           {phase === 'rejected' && (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
-              <span className="grid size-16 place-items-center rounded-2xl bg-surface-sunken text-ink-muted">
+              <span className="grid size-16 place-items-center rounded-2xl bg-surface-sunken/50 dark:bg-black/20 text-ink-muted">
                 <XCircle className="size-7" aria-hidden="true" />
               </span>
               <div>

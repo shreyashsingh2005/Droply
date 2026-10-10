@@ -85,13 +85,13 @@ const SECTIONS = [
 
 export function Privacy() {
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-10">
+    <div className="mx-auto w-full max-w-3xl 2xl:max-w-4xl px-4 sm:px-6 py-8 sm:py-10">
       <header className="mb-8">
-        <h1 className="flex items-center gap-2.5 text-2xl font-bold text-ink sm:text-3xl">
+        <h1 className="flex items-center gap-2.5 text-2xl 2xl:text-3xl font-bold text-ink sm:text-3xl">
           <ShieldCheck className="size-7 text-brand" aria-hidden="true" />
           Privacy
         </h1>
-        <p className="mt-3 max-w-2xl text-ink-muted">
+        <p className="mt-3 max-w-2xl 2xl:max-w-3xl 2xl:max-w-4xl text-ink-muted">
           What Droply does with your data, described precisely. Where a guarantee is weaker than it
           might sound, this page says so.
         </p>

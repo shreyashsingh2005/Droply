@@ -134,10 +134,10 @@ export function History() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-10">
+    <div className="mx-auto w-full max-w-3xl 2xl:max-w-4xl px-4 sm:px-6 py-8 sm:py-10">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="flex items-center gap-2.5 text-2xl font-bold text-ink sm:text-3xl">
+          <h1 className="flex items-center gap-2.5 text-2xl 2xl:text-3xl font-bold text-ink sm:text-3xl">
             <HistoryIcon className="size-7 text-brand" aria-hidden="true" />
             Transfer history
           </h1>
@@ -160,7 +160,7 @@ export function History() {
         again, ask the sender to share it again.
       </Alert>
 
-      <Panel>
+      <Panel className="bg-surface-raised/80 backdrop-blur-xl border-line dark:border-white/10 shadow-lg ">
         <PanelHeader
           title="Records"
           description={`${counts.received} received · ${counts.sent} sent`}
@@ -178,14 +178,14 @@ export function History() {
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search by file name"
               aria-label="Search history by file name"
-              className="w-full rounded-xl border border-line bg-surface-sunken py-2.5 pl-10 pr-3 text-sm text-ink placeholder:text-ink-subtle focus:border-brand focus:bg-surface-raised"
+              className="w-full rounded-xl border border-line bg-surface-sunken/50 dark:bg-black/20 py-2.5 pl-10 pr-3 text-sm text-ink placeholder:text-ink-subtle focus:border-brand focus:bg-surface-raised"
             />
           </div>
 
           <div
             role="radiogroup"
             aria-label="Filter by direction"
-            className="flex items-center gap-0.5 rounded-xl border border-line bg-surface-sunken p-0.5"
+            className="flex items-center gap-0.5 rounded-xl border border-line bg-surface-sunken/50 dark:bg-black/20 p-0.5"
           >
             {FILTERS.map(({ value, label }) => (
               <button

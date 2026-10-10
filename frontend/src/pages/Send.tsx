@@ -373,9 +373,9 @@ export function Send() {
   /* ----------------------------------------------------------------------- */
   if (phase === 'no-files') {
     return (
-      <div className="mx-auto w-full max-w-2xl px-4 sm:px-6 py-8 sm:py-12">
-        <h1 className="text-3xl font-extrabold text-ink mb-8">Send files</h1>
-        <Panel className="p-4 sm:p-6 shadow-float bg-surface-overlay/80 backdrop-blur-xl border-white/5">
+      <div className="mx-auto w-full max-w-2xl 2xl:max-w-3xl 2xl:max-w-4xl px-4 sm:px-6 py-8 sm:py-12">
+        <h1 className="text-3xl 2xl:text-4xl font-extrabold text-ink mb-8">Send files</h1>
+        <Panel className="bg-surface-raised/80 backdrop-blur-xl border-line dark:border-white/10 shadow-lg p-4 sm:p-6 shadow-float">
           <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr]">
             <div
               onDrop={onDrop}
@@ -391,10 +391,10 @@ export function Send() {
                 if (dragDepth.current === 0) setDragging(false);
               }}
               className={cn(
-                'flex flex-col items-center justify-center rounded-card border-2 border-dashed px-6 py-10 text-center transition-all duration-200',
+                'flex flex-col items-center justify-center rounded-card border-2 border-dashed border-line-strong dark:border-white/20 px-6 py-10 text-center transition-all duration-200',
                 dragging
                   ? 'border-brand bg-brand-soft/50 scale-[1.02]'
-                  : 'border-line/50 bg-surface-sunken hover:border-brand/50 hover:bg-surface-hover/30',
+                  : 'border-line/50 bg-surface-sunken/50 dark:bg-black/20 hover:border-brand/50 hover:bg-surface-hover/30',
               )}
             >
               <span
@@ -431,7 +431,7 @@ export function Send() {
               />
             </div>
 
-            <div className="flex flex-col rounded-card border border-line bg-surface-sunken">
+            <div className="flex flex-col rounded-card border border-line bg-surface-sunken/50 dark:bg-black/20">
               <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 bg-surface-raised/50 rounded-t-card">
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-ink">
@@ -496,10 +496,10 @@ export function Send() {
 
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 sm:px-6 py-8 sm:py-10">
+    <div className="mx-auto w-full max-w-2xl 2xl:max-w-3xl 2xl:max-w-4xl px-4 sm:px-6 py-8 sm:py-10">
       <StatusAnnouncer message={announcement} />
 
-      <Panel>
+      <Panel className="bg-surface-raised/80 backdrop-blur-xl border-line dark:border-white/10 shadow-lg ">
         <PanelHeader
           title="Send files"
           description={`${files.length} ${files.length === 1 ? 'file' : 'files'} · ${formatBytes(grandTotal)}`}
@@ -535,7 +535,7 @@ export function Send() {
               ) : (
                 <>
                   <RoomCard roomId={roomId} shareUrl={shareUrl} />
-                  <div className="flex items-center justify-center gap-2.5 rounded-card border border-line bg-surface-sunken px-4 py-3">
+                  <div className="flex items-center justify-center gap-2.5 rounded-card border border-line bg-surface-sunken/50 dark:bg-black/20 px-4 py-3">
                     <Spinner className="size-4" />
                     <p className="text-sm font-semibold text-ink-muted">
                       Waiting for the other device to join
@@ -666,7 +666,7 @@ export function Send() {
                 <span
                   className={
                     phase === 'cancelled'
-                      ? 'grid size-16 place-items-center rounded-2xl bg-surface-sunken text-ink-muted'
+                      ? 'grid size-16 place-items-center rounded-2xl bg-surface-sunken/50 dark:bg-black/20 text-ink-muted'
                       : 'grid size-16 place-items-center rounded-2xl bg-danger-soft text-danger'
                   }
                 >
@@ -715,7 +715,7 @@ export function Send() {
 
       {/* Selection summary, shown while the transfer has not started. */}
       {(phase === 'opening' || phase === 'waiting' || phase === 'negotiating' || phase === 'ready') && (
-        <Panel className="mt-5">
+        <Panel className="bg-surface-raised/80 backdrop-blur-xl border-line dark:border-white/10 shadow-lg mt-5">
           <PanelHeader title="Selected files" description={formatBytes(grandTotal)} />
           <ul className="divide-y divide-line">
             {files.map((file, index) => (
