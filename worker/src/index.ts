@@ -11,7 +11,16 @@
  * File bytes never touch this Worker. There is no storage fallback.
  */
 
-export const PROTOCOL_VERSION = 2;
+/**
+ * Protocol version.
+ *
+ * Deliberately *not* exported: the Workers runtime treats every named export of
+ * the entry module as a handler and refuses to start -- "Incorrect type for map
+ * entry 'PROTOCOL_VERSION': the provided value is not of type 'function or
+ * ExportedHandler'" -- which took the whole signaling service down. The value
+ * is mirrored in `frontend/src/services/signaling.ts`.
+ */
+const PROTOCOL_VERSION = 2;
 
 /** Room codes are exactly what the client generates: 6 chars, A-Z0-9. */
 const ROOM_ID_RE = /^[A-Z0-9]{6}$/;

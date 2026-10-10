@@ -91,6 +91,20 @@ const FALLBACK_ICE_SERVERS: RTCIceServer[] = [
 let cachedIceConfig: { iceServers: RTCIceServer[]; turn: boolean } | null = null;
 
 /**
+ * The DTLS fingerprint in an SDP identifies a peer's connection *generation*.
+ *
+ * It is how we tell an ICE-restart re-offer (same peer connection, same
+ * fingerprint -- apply it in place) from an offer by a peer that rebuilt its
+ * RTCPeerConnection (new fingerprint -- our existing connection can never
+ * complete a DTLS handshake against it, so it has to be thrown away).
+ */
+export function dtlsFingerprint(sdp: string | undefined | null): string | null {
+  if (!sdp) return null;
+  const match = /^a=fingerprint:\s*\S+\s+(\S+)/im.exec(sdp);
+  return match ? match[1].trim().toLowerCase() : null;
+}
+
+/**
  * ICE servers come from the signaling Worker at runtime, so TURN credentials
  * never sit in the client bundle. STUN-only is enough for most networks but
  * *cannot* traverse symmetric NAT / CGNAT (common on mobile carriers): those
@@ -150,6 +164,12 @@ export class PeerConnection {
   private negotiationTimer: number | null = null;
   private iceGraceTimer: number | null = null;
   private iceRestartAttempted = false;
+  /**
+   * DTLS fingerprint of the peer connection we last negotiated with. A change
+   * means the far side rebuilt its peer (refresh, retry, reconnect), so every
+   * artifact of the old connection is dead: we must start over.
+   */
+  private remoteFingerprint: string | null = null;
 
   constructor(roomId: string, role: Role, handlers: PeerHandlers = {}) {
     this.roomId = roomId;
@@ -251,29 +271,37 @@ export class PeerConnection {
     switch (frame.type) {
       case 'welcome':
         log.webrtc.debug('welcome', { role: frame.role, peerPresent: frame.peerPresent });
-        
-        if (frame.peerPresent) this.beginNegotiation();
-        else if (this.state === 'signaling' || this.state === 'reconnecting') {
+        if (frame.peerPresent) {
+          // `restart: false` -- this frame also arrives when our own socket
+          // reconnects and the counterpart may be untouched, so it must never
+          // discard a negotiation that is already under way.
+          this.beginNegotiation({ restart: false });
+        } else if (this.state === 'signaling' || this.state === 'reconnecting') {
           this.setState('waiting-for-peer');
         }
         break;
 
       case 'peer-joined':
         log.webrtc.debug('peer joined', { role: frame.role });
-        
-        this.beginNegotiation();
+        // `restart: true` -- see beginNegotiation. The counterpart has a new
+        // socket and therefore a new RTCPeerConnection; anything we negotiated
+        // before can no longer complete.
+        this.beginNegotiation({ restart: true });
         break;
 
       case 'peer-left': {
         log.webrtc.debug('peer left', { wasConnected: this.state === 'connected' });
-        
+
         const wasConnected = this.state === 'connected';
         this.handlers.onPeerLeft?.(wasConnected);
+        // Whoever left is gone whatever we had established; the next trigger
+        // for this role is a fresh join rather than a duplicate.
+        this.negotiating = false;
+        this.teardownPeer();
+        this.clearNegotiationTimeout();
         if (!wasConnected) {
           // Nothing was established: go back to waiting so the peer can
           // reconnect (a refresh on their side lands here).
-          this.teardownPeer();
-          this.negotiating = false;
           this.setState('waiting-for-peer');
         }
         break;
@@ -317,11 +345,41 @@ export class PeerConnection {
 
   // --- negotiation ---------------------------------------------------------
 
-  /** Idempotent: safe to call for both `welcome` and `peer-joined`. */
-  private beginNegotiation(): void {
-    if (this.destroyed || this.negotiating || this.state === 'connected') return;
+  /**
+   * Begin a negotiation round, or throw the current one away and begin again.
+   *
+   * Two triggers reach here, and they mean different things:
+   *
+   *  - `welcome` with `peerPresent` -- the counterpart was already in the room.
+   *    This also arrives when *our own* socket reconnects and the counterpart
+   *    never went anywhere, so it must be idempotent: if a round is already
+   *    under way, do nothing.
+   *
+   *  - `peer-joined` -- the counterpart just opened a *new* signaling socket.
+   *    The Worker sends this whether or not it first sent `peer-left`, so a
+   *    rejoin (refresh, StrictMode remount, reconnect, "Try again") looks
+   *    exactly like a first join. A peer with a new socket has a new
+   *    `RTCPeerConnection` with new ICE credentials and a new DTLS fingerprint,
+   *    which means the round we are in can never complete: the offer the sender
+   *    already sent is unanswerable.
+   *
+   * That second case must always restart, even from `connected`. A receiver
+   * that rebuilt sits waiting for an offer; if the sender stays "connected" to
+   * a connection the receiver has already torn down, the receiver simply times
+   * out. Restarting instead converges from either side, so it is the only
+   * choice that cannot deadlock.
+   */
+  private beginNegotiation(opts: { restart: boolean }): void {
+    if (this.destroyed) return;
+    // A `welcome` for a round already in progress is the same join twice.
+    if (!opts.restart && this.negotiating) return;
+
+    const restarting = this.negotiating;
     this.negotiating = true;
     this.iceRestartAttempted = false;
+    this.remoteFingerprint = null;
+    if (restarting) log.webrtc.debug('peer rejoined; restarting negotiation');
+    this.clearNegotiationTimeout();
     this.setState('negotiating');
     this.armNegotiationTimeout();
     this.buildPeer();
@@ -466,21 +524,35 @@ export class PeerConnection {
   }
 
   private async handleOffer(sdp: RTCSessionDescriptionInit): Promise<void> {
-    if (!this.negotiating) {
-      // Offer arrived before our presence notification; treat it as the
-      // trigger so we never deadlock on message ordering.
+    // An offer from a peer whose DTLS fingerprint we have not seen before is
+    // not a re-offer: it is a brand-new connection. Our existing RTPeerConnection
+    // carries the old connection's identity, so answering onto it would produce
+    // an answer the sender can never complete against.
+    const incoming = dtlsFingerprint(sdp.sdp);
+    const rebuilt = incoming !== null && incoming !== this.remoteFingerprint;
+
+    if (!this.negotiating || rebuilt) {
+      if (!this.negotiating) {
+        // Offer arrived before our presence notification; treat it as the
+        // trigger so we never deadlock on message ordering.
+        log.webrtc.debug('offer arrived before presence; negotiating on it');
+      } else {
+        log.webrtc.debug('peer rebuilt its connection; answering on a fresh one');
+      }
       this.negotiating = true;
+      this.clearNegotiationTimeout();
       this.setState('negotiating');
       this.armNegotiationTimeout();
       this.buildPeer();
     }
     const pc = this.pc;
     if (!pc) return;
+    if (incoming) this.remoteFingerprint = incoming;
 
     try {
       if (pc.signalingState !== 'stable') {
-        // A re-offer (ICE restart, or the sender rebuilding after we
-        // refreshed). Roll our half back and take the new one.
+        // A re-offer on the *same* connection (an ICE restart): roll our half
+        // back and take the new one.
         log.webrtc.debug('rolling back to accept re-offer', pc.signalingState);
         try {
           await pc.setLocalDescription({ type: 'rollback' });
