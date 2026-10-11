@@ -112,35 +112,81 @@ function Header({
   onThemeChange: (next: ThemePreference) => void;
 }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-line dark:border-white/5 bg-surface/85 pt-safe backdrop-blur-xl">
-      <div className="mx-auto flex h-20 max-w-7xl 2xl:max-w-screen-2xl items-center justify-between gap-4 px-4 sm:px-6">
-        <NavLink to="/" className="shrink-0 rounded-lg flex items-center gap-2" aria-label="Droply home">
-          <Logo size={32} />
-                  </NavLink>
+    <header className="sticky top-0 z-40 border-b border-[color:var(--glass-line)] bg-[color:var(--nav-bg)] pt-safe backdrop-blur-xl backdrop-saturate-150">
+      <div className="shell relative flex h-[4.5rem] items-center justify-between gap-4 lg:h-20">
+        <NavLink
+          to="/"
+          className="shrink-0 rounded-lg transition-opacity hover:opacity-90"
+          aria-label="Droply home"
+        >
+          <Logo size={34} />
+        </NavLink>
 
-        <nav aria-label="Main" className="hidden items-center gap-1 md:flex rounded-full border border-line/50 bg-surface-raised/40 p-1.5 backdrop-blur-md shadow-sm">
+        {/* Centre pill. Each item is a rounded tab; the current one is a
+            filled, glowing blue pill. Laid out as a normal flex child rather
+            than absolutely centred, so it can never collide with the logo or
+            the actions on a narrow desktop window. */}
+        <nav
+          aria-label="Main"
+          className="mx-auto hidden items-center gap-1 rounded-full border border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] p-1.5 shadow-card backdrop-blur-xl lg:flex"
+        >
           {[...PRIMARY_NAV, ...SECONDARY_NAV].map(({ to, label, Icon, end }) => (
-            <NavLink key={to} to={to} end={end} className={({ isActive }) => cn(
-              'flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200',
-              isActive ? 'bg-brand text-white shadow-brand-glow' : 'text-ink-muted hover:text-ink hover:bg-surface-hover/50'
-            )}>
-              <Icon className="size-4" aria-hidden="true" />
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold transition-all duration-200 xl:px-4',
+                  isActive
+                    ? 'btn-glow'
+                    : 'text-ink-muted hover:bg-[color:var(--surface-hover)] hover:text-ink',
+                )
+              }
+            >
+              <Icon className="size-4 shrink-0" aria-hidden="true" />
               {label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
           <ThemeSwitch preference={preference} onChange={onThemeChange} />
           <NavLink
             to="/send"
-            className="hidden sm:inline-flex h-10 items-center justify-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white shadow-brand-glow transition-all hover:bg-brand-hover active:scale-95"
+            className="btn-glow hidden h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-bold tracking-tight sm:inline-flex"
           >
             Get Started
             <ArrowRight className="size-4" aria-hidden="true" />
           </NavLink>
         </div>
       </div>
+
+      {/* Tablet row: the pill does not fit beside the logo and the CTA, so it
+          moves to its own scrollable line instead of disappearing. */}
+      <nav
+        aria-label="Main"
+        className="shell hidden overflow-x-auto pb-3 md:block lg:hidden"
+      >
+        <div className="flex w-max items-center gap-1 rounded-full border border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] p-1.5">
+          {[...PRIMARY_NAV, ...SECONDARY_NAV].map(({ to, label, Icon, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all',
+                  isActive ? 'btn-glow' : 'text-ink-muted hover:text-ink',
+                )
+              }
+            >
+              <Icon className="size-4 shrink-0" aria-hidden="true" />
+              {label}
+            </NavLink>
+          ))}
+        </div>
+      </nav>
     </header>
   );
 }
@@ -153,7 +199,7 @@ function MobileNav() {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 pb-safe backdrop-blur-xl md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--glass-line)] bg-[color:var(--nav-bg)] pb-safe backdrop-blur-xl md:hidden"
     >
       <ul className="mx-auto flex max-w-md items-stretch">
         {PRIMARY_NAV.map(({ to, label, Icon, end }) => (
@@ -184,21 +230,40 @@ function MobileNav() {
 
 function Footer() {
   return (
-    <footer className="mt-20 border-t border-line">
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-5 px-4 py-10 sm:px-6 md:flex-row md:justify-between">
-        <Logo size={24} />
+    <footer className="relative z-10 mt-16 border-t border-[color:var(--glass-line)]">
+      <div className="shell flex flex-col items-center gap-5 py-9 md:flex-row md:justify-between">
+        <Logo size={26} />
         <nav aria-label="Footer" className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
           {[...PRIMARY_NAV, ...SECONDARY_NAV].map(({ to, label }) => (
-            <NavLink key={to} to={to} className="font-medium text-ink-muted hover:text-ink">
+            <NavLink
+              key={to}
+              to={to}
+              className="font-medium text-ink-muted transition-colors hover:text-ink"
+            >
               {label}
             </NavLink>
           ))}
         </nav>
-        <p className="text-xs text-ink-subtle">
+        <p className="text-center text-xs text-ink-subtle">
           &copy; {new Date().getFullYear()} Droply. Files travel between devices, not through us.
         </p>
       </div>
     </footer>
+  );
+}
+
+/**
+ * Page atmosphere: the drifting aurora, the perspective floor grid and the
+ * corner vignette that together give the deep, layered background. Fixed
+ * behind everything, decorative, and never interactive.
+ */
+function Atmosphere() {
+  return (
+    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
+      <div className="app-aurora" />
+      <div className="app-floor" />
+      <div className="app-vignette" />
+    </div>
   );
 }
 
@@ -254,16 +319,21 @@ export default function App() {
         Skip to content
       </a>
 
-      <div className="flex min-h-screen min-h-dvh flex-col bg-surface text-ink">
+      {/* No background on this wrapper: `body` paints the base colour, and
+          the Atmosphere layers sit at a negative z-index above it. An opaque
+          background here would paint over them. */}
+      <div className="relative flex min-h-screen min-h-dvh flex-col text-ink">
+        <Atmosphere />
         <OfflineBanner />
         <BrowserSupportBanner />
         <Header preference={preference} onThemeChange={setPreference} />
 
-        <main id="main" className="w-full flex-1 flex flex-col pb-10 mb-safe-nav md:mb-0">
+        <main id="main" className="relative z-10 flex w-full flex-1 flex-col">
           <RoutedContent />
         </main>
 
         <Footer />
+        <div className="mb-safe-nav md:hidden" aria-hidden="true" />
         <MobileNav />
       </div>
     </BrowserRouter>

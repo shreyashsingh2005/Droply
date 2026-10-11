@@ -15,7 +15,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
 
     <!-- Updated at runtime by useTheme so the browser chrome matches the page. -->
-    <meta name="theme-color" content="#070D18" />
+    <meta name="theme-color" content="#03081A" />
 
     <!-- Only reference assets that exist in /public. The previous build also
          asked for favicon.ico, apple-touch-icon.png and masked-icon.svg, none
@@ -56,7 +56,7 @@
           root.classList.toggle('dark', dark);
           root.style.colorScheme = dark ? 'dark' : 'light';
           var meta = document.querySelector('meta[name="theme-color"]');
-          if (meta) meta.setAttribute('content', dark ? '#070D18' : '#F6F8FC');
+          if (meta) meta.setAttribute('content', dark ? '#03081A' : '#F6F8FD');
         } catch (e) {
           /* storage blocked (private browsing): the dark default stands */
         }
@@ -67,10 +67,10 @@
       /* Paint the page background immediately, so there is no white flash
          before the stylesheet and the app bundle arrive. */
       html {
-        background: #040a18;
+        background: #f6f8fd;
       }
       html.dark {
-        background: #040a18;
+        background: #03081a;
       }
       #root {
         min-height: 100vh;

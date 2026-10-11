@@ -39,7 +39,7 @@ function apply(resolved: ResolvedTheme): void {
   root.style.colorScheme = resolved;
   // Keep the browser UI (address bar, notch area) in step with the page.
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', resolved === 'dark' ? '#070D18' : '#F6F8FC');
+  if (meta) meta.setAttribute('content', resolved === 'dark' ? '#03081A' : '#F6F8FD');
 }
 
 export function useTheme(): {

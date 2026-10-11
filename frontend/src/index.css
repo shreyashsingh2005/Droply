@@ -35,6 +35,8 @@
   --color-cyan: var(--cyan);
   --color-cyan-soft: var(--cyan-soft);
   --color-violet: var(--violet);
+  --color-violet-soft: var(--violet-soft);
+  --color-indigo: var(--indigo);
 
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
@@ -58,78 +60,110 @@
     color-scheme: light;
 
     /* Premium Light: crisp surfaces, vivid accents, dark readable ink. */
-    --surface: #f8fafc;
-    --surface-sunken: #f1f5f9;
+    --surface: #f6f8fd;
+    --surface-sunken: #eef2fb;
     --surface-raised: #ffffff;
     --surface-overlay: #ffffff;
-    --surface-hover: #f1f5f9;
+    --surface-hover: #e9eefb;
 
-    --line: #e2e8f0;
-    --line-strong: #cbd5e1;
+    --line: #dde5f5;
+    --line-strong: #c2cfe8;
 
-    --ink: #0f172a;
+    --ink: #0a1024;
     --ink-muted: #475569;
-    --ink-subtle: #64748b;
+    --ink-subtle: #697890;
     --ink-inverted: #ffffff;
 
-    --brand: #2b5cff;
-    --brand-hover: #1e40af;
-    --brand-soft: #dbeafe;
-    --brand-ring: #2b5cff;
-    --cyan: #0891b2;
-    --cyan-soft: #cffafe;
-    --violet: #8b5cf6;
+    --brand: #2056f0;
+    --brand-hover: #1842c8;
+    --brand-soft: #dde7ff;
+    --brand-ring: #2056f0;
+    --cyan: #0b93b4;
+    --cyan-soft: #d2f3fb;
+    --violet: #7c3aed;
+    --violet-soft: #ece3ff;
+    --indigo: #4f46e5;
 
-    --success: #059669;
-    --success-soft: #d1fae5;
-    --warning: #d97706;
-    --warning-soft: #fef3c7;
-    --danger: #dc2626;
-    --danger-soft: #fee2e2;
+    --success: #067a55;
+    --success-soft: #d4f5e6;
+    --warning: #c2650a;
+    --warning-soft: #fdeecd;
+    --danger: #d92020;
+    --danger-soft: #fee0e0;
 
-    --shadow-sm: 0 1px 2px rgb(15 23 41 / 0.05);
-    --shadow-md: 0 4px 16px -4px rgb(15 23 41 / 0.08), 0 1px 3px rgb(15 23 41 / 0.04);
-    --shadow-lg: 0 18px 44px -12px rgb(15 23 41 / 0.12), 0 2px 8px rgb(15 23 41 / 0.04);
-    --shadow-brand: 0 10px 28px -10px rgb(43 92 255 / 0.4);
+    /* Hero / page atmosphere, tuned per theme so the same markup works in both. */
+    --aurora-1: rgba(32, 86, 240, 0.16);
+    --aurora-2: rgba(11, 147, 180, 0.14);
+    --aurora-3: rgba(124, 58, 237, 0.12);
+    --grid-line: rgba(32, 86, 240, 0.13);
+    --floor-glow: rgba(32, 86, 240, 0.12);
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-bg-strong: rgba(255, 255, 255, 0.86);
+    --glass-line: rgba(10, 16, 36, 0.08);
+    --glass-line-lit: rgba(32, 86, 240, 0.28);
+    --nav-bg: rgba(255, 255, 255, 0.78);
+    --nav-shell: rgba(238, 242, 251, 0.9);
+
+    --shadow-sm: 0 1px 2px rgb(10 16 36 / 0.05);
+    --shadow-md: 0 4px 16px -4px rgb(10 16 36 / 0.1), 0 1px 3px rgb(10 16 36 / 0.05);
+    --shadow-lg: 0 18px 44px -12px rgb(10 16 36 / 0.16), 0 2px 8px rgb(10 16 36 / 0.05);
+    --shadow-brand: 0 10px 28px -10px rgb(32 86 240 / 0.45);
+    --shadow-brand-lift: 0 16px 40px -12px rgb(32 86 240 / 0.55);
   }
 
   .dark {
     color-scheme: dark;
 
-    /* Cinematic Premium Dark */
-    --surface: #040a18;
-    --surface-sunken: #01040a;
-    --surface-raised: #0b1428;
-    --surface-overlay: #131f3a;
-    --surface-hover: #172a4d;
+    /* Cinematic midnight navy, matching the product reference: near-black at
+       the edges, deep electric navy through the middle. */
+    --surface: #03081a;
+    --surface-sunken: #010511;
+    --surface-raised: #091330;
+    --surface-overlay: #0d1a3d;
+    --surface-hover: #142551;
 
-    --line: #1a294d;
-    --line-strong: #2c4270;
+    --line: #18275180;
+    --line-strong: #2a3f73;
 
     --ink: #ffffff;
-    --ink-muted: #94a3b8;
-    --ink-subtle: #64748b;
-    --ink-inverted: #020617;
+    --ink-muted: #9fb0cd;
+    --ink-subtle: #7489a8;
+    --ink-inverted: #03081a;
 
-    --brand: #2b5cff;
-    --brand-hover: #4a75ff;
-    --brand-soft: #142a7a;
-    --brand-ring: #4a75ff;
-    --cyan: #00f0ff;
-    --cyan-soft: #004d55;
-    --violet: #9d4edd;
+    --brand: #2f6bff;
+    --brand-hover: #5488ff;
+    --brand-soft: #122a6e;
+    --brand-ring: #5488ff;
+    --cyan: #22d9f5;
+    --cyan-soft: #0a3d4d;
+    --violet: #9a63ff;
+    --violet-soft: #2c1a63;
+    --indigo: #6366f1;
 
-    --success: #10b981;
-    --success-soft: #064e3b;
-    --warning: #f59e0b;
-    --warning-soft: #78350f;
-    --danger: #ef4444;
-    --danger-soft: #7f1d1d;
+    --success: #19d492;
+    --success-soft: #06402f;
+    --warning: #ffa32e;
+    --warning-soft: #5c3105;
+    --danger: #ff5a5a;
+    --danger-soft: #611717;
 
-    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.8);
-    --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.9), 0 1px 3px rgb(0 0 0 / 0.6);
-    --shadow-lg: 0 20px 50px -14px rgb(0 0 0 / 1), 0 2px 10px rgb(0 0 0 / 0.7);
-    --shadow-brand: 0 8px 32px -8px rgba(43, 92, 255, 0.6);
+    --aurora-1: rgba(47, 107, 255, 0.3);
+    --aurora-2: rgba(34, 217, 245, 0.18);
+    --aurora-3: rgba(154, 99, 255, 0.2);
+    --grid-line: rgba(90, 150, 255, 0.16);
+    --floor-glow: rgba(47, 107, 255, 0.26);
+    --glass-bg: rgba(10, 20, 48, 0.55);
+    --glass-bg-strong: rgba(12, 24, 56, 0.78);
+    --glass-line: rgba(255, 255, 255, 0.08);
+    --glass-line-lit: rgba(84, 136, 255, 0.4);
+    --nav-bg: rgba(6, 13, 33, 0.72);
+    --nav-shell: rgba(11, 22, 52, 0.55);
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.6);
+    --shadow-md: 0 6px 20px -6px rgb(0 0 0 / 0.75), 0 1px 3px rgb(0 0 0 / 0.5);
+    --shadow-lg: 0 24px 60px -18px rgb(0 0 0 / 0.95), 0 2px 10px rgb(0 0 0 / 0.6);
+    --shadow-brand: 0 10px 34px -10px rgba(47, 107, 255, 0.65);
+    --shadow-brand-lift: 0 18px 48px -12px rgba(47, 107, 255, 0.8);
   }
 
   * {
@@ -139,6 +173,7 @@
   html {
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
+    background-color: var(--surface);
   }
 
   body {
@@ -151,6 +186,8 @@
     text-rendering: optimizeLegibility;
     /* Never let a transfer screen bounce the whole page on iOS. */
     overscroll-behavior-y: none;
+    /* Advanced effects below layer on top of a solid base, so a browser that
+       drops a gradient or a filter still gets the right background. */
   }
 
   /* One consistent, always-visible focus treatment. Removing outlines without
@@ -175,7 +212,7 @@
   h2,
   h3,
   h4 {
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
     text-wrap: balance;
   }
 
@@ -217,10 +254,68 @@
 }
 
 @layer utilities {
+  /* -----------------------------------------------------------------------
+     Content rhythm
+     -----------------------------------------------------------------------
+     One shared measure for every page, so the navigation, hero, benefits
+     strip and cards all line up on the same left and right edges. Widens on
+     very large displays instead of stranding the layout in the middle of a
+     4K screen.
+  ----------------------------------------------------------------------- */
+  .shell {
+    width: 100%;
+    margin-inline: auto;
+    max-width: 82rem;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 640px) {
+    .shell {
+      padding-inline: 1.75rem;
+    }
+  }
+  @media (min-width: 1536px) {
+    .shell {
+      max-width: 94rem;
+      padding-inline: 2.5rem;
+    }
+  }
+  @media (min-width: 2200px) {
+    .shell {
+      max-width: 108rem;
+    }
+  }
+
+  .shell-narrow {
+    width: 100%;
+    margin-inline: auto;
+    max-width: 52rem;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 640px) {
+    .shell-narrow {
+      padding-inline: 1.75rem;
+    }
+  }
+  @media (min-width: 1536px) {
+    .shell-narrow {
+      max-width: 62rem;
+    }
+  }
+
+  /* -----------------------------------------------------------------------
+     Surfaces
+  ----------------------------------------------------------------------- */
   .panel {
-    background: var(--surface-raised);
-    border: 1px solid var(--line);
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-line);
     box-shadow: var(--shadow-md);
+  }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .panel {
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      backdrop-filter: blur(18px) saturate(140%);
+    }
   }
 
   .panel-sunken {
@@ -228,6 +323,97 @@
     border: 1px solid var(--line);
   }
 
+  /* Translucent chrome. The solid colour is declared first so Firefox
+     versions without backdrop-filter still get a readable surface. */
+  .glass {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-line);
+  }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .glass {
+      -webkit-backdrop-filter: blur(16px) saturate(140%);
+      backdrop-filter: blur(16px) saturate(140%);
+    }
+  }
+
+  .glass-panel {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-line);
+    box-shadow: var(--shadow-lg);
+  }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .glass-panel {
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+    }
+  }
+
+  /* Feature card: translucent navy, a hairline that lights up on hover, and a
+     soft lift. Matches the four cards along the bottom of the reference. */
+  .feature-card {
+    position: relative;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-line);
+    box-shadow: var(--shadow-md);
+    transition:
+      transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.35s ease,
+      box-shadow 0.35s ease,
+      background-color 0.35s ease;
+  }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .feature-card {
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+    }
+  }
+
+  .feature-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(140deg, rgba(255, 255, 255, 0.22), transparent 42%);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  .feature-card:hover,
+  .feature-card:focus-within {
+    transform: translateY(-5px);
+    border-color: var(--glass-line-lit);
+    background: var(--glass-bg-strong);
+    box-shadow: var(--shadow-lg), 0 0 0 1px var(--glass-line-lit), 0 18px 50px -24px var(--brand);
+  }
+
+  /* Kept as an alias so screens that already use it stay in the system. */
+  .glass-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-line);
+    transition: all 0.3s ease;
+  }
+  .glass-card:hover {
+    background: var(--glass-bg-strong);
+    border-color: var(--glass-line-lit);
+    box-shadow: 0 0 22px -6px var(--brand);
+    transform: translateY(-2px);
+  }
+
+  /* -----------------------------------------------------------------------
+     Shadows / glow
+  ----------------------------------------------------------------------- */
   .shadow-soft {
     box-shadow: var(--shadow-sm);
   }
@@ -241,7 +427,9 @@
     box-shadow: var(--shadow-brand);
   }
 
-
+  /* -----------------------------------------------------------------------
+     Type treatments
+  ----------------------------------------------------------------------- */
   .text-gradient {
     background: linear-gradient(to right, var(--cyan), var(--brand), var(--violet));
     -webkit-background-clip: text;
@@ -250,60 +438,255 @@
     color: transparent;
   }
 
+  /* The headline accent: cyan into electric blue into violet, exactly the
+     sweep used for "Directly." in the reference. A solid colour is set first
+     so a browser without background-clip:text still shows readable text. */
+  .text-gradient-hero {
+    color: var(--cyan);
+    background-image: linear-gradient(
+      100deg,
+      #22d9f5 0%,
+      #3b82f6 42%,
+      #6366f1 68%,
+      #9a63ff 100%
+    );
+  }
+
+  @supports (-webkit-background-clip: text) or (background-clip: text) {
+    .text-gradient-hero {
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+  }
+
   .text-gradient-cyan {
-    background: linear-gradient(135deg, #00f0ff 0%, #2b5cff 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
+    color: var(--cyan);
+    background-image: linear-gradient(135deg, #22d9f5 0%, #2f6bff 100%);
   }
 
-  .bg-radial-hero {
-    background: radial-gradient(circle at center 20%, rgba(43, 92, 255, 0.15) 0%, rgba(4, 10, 24, 0) 60%),
-                radial-gradient(circle at 80% 60%, rgba(0, 240, 255, 0.1) 0%, rgba(4, 10, 24, 0) 50%);
+  @supports (-webkit-background-clip: text) or (background-clip: text) {
+    .text-gradient-cyan {
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
   }
 
+  /* -----------------------------------------------------------------------
+     Page atmosphere
+     -----------------------------------------------------------------------
+     Three layers, all decorative and pointer-transparent:
+       .app-aurora   - slow drifting radial glows (blue / cyan / violet)
+       .app-floor    - perspective grid plus a luminous horizon near the base
+       .app-vignette - darkens the corners so the centre reads brighter
+  ----------------------------------------------------------------------- */
+  .app-aurora {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .app-aurora::before,
+  .app-aurora::after {
+    content: "";
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    will-change: transform;
+  }
+
+  .app-aurora::before {
+    width: min(120vw, 1500px);
+    height: min(90vh, 1000px);
+    top: -32%;
+    left: -18%;
+    background: radial-gradient(circle at 50% 50%, var(--aurora-1) 0%, transparent 68%);
+    animation: aurora-drift-a 26s ease-in-out infinite;
+  }
+
+  .app-aurora::after {
+    width: min(100vw, 1200px);
+    height: min(80vh, 900px);
+    top: -8%;
+    right: -20%;
+    background:
+      radial-gradient(circle at 40% 40%, var(--aurora-3) 0%, transparent 65%),
+      radial-gradient(circle at 70% 70%, var(--aurora-2) 0%, transparent 60%);
+    animation: aurora-drift-b 32s ease-in-out infinite;
+  }
+
+  /* Perspective floor grid. Built from two linear gradients on a plane tilted
+     in 3D, so the lines converge toward a horizon the way the reference does.
+     The mask fades both the far distance and the near edge. */
+  .app-floor {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: clamp(280px, 42vh, 620px);
+    overflow: hidden;
+    perspective: 520px;
+    perspective-origin: 50% 0%;
+  }
+
+  .app-floor::before {
+    content: "";
+    position: absolute;
+    inset-inline: -55%;
+    top: 0;
+    height: 170%;
+    transform: rotateX(70deg);
+    transform-origin: 50% 0%;
+    background-image:
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 72px 72px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 18%, #000 58%, transparent 90%);
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 18%, #000 58%, transparent 90%);
+  }
+
+  /* Luminous horizon line where the grid meets the glow. */
+  .app-floor::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 60%;
+    background: radial-gradient(ellipse 70% 100% at 50% 0%, var(--floor-glow) 0%, transparent 72%);
+  }
+
+  .app-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 85% 70% at 50% 35%, transparent 40%, rgb(0 0 0 / 0.35) 100%);
+  }
+
+  :root .app-vignette {
+    background: radial-gradient(ellipse 85% 70% at 50% 35%, transparent 55%, rgb(10 16 36 / 0.05) 100%);
+  }
+
+  .dark .app-vignette {
+    background: radial-gradient(ellipse 85% 70% at 50% 35%, transparent 40%, rgb(0 0 0 / 0.42) 100%);
+  }
+
+  /* Hairline grid used behind inner sections. Subtle, not decorative noise. */
   .bg-grid {
     background-image:
-      linear-gradient(to right, var(--line) 1px, transparent 1px),
-      linear-gradient(to bottom, var(--line) 1px, transparent 1px);
-    background-size: 40px 40px;
-    mask-image: radial-gradient(ellipse 90% 80% at 50% 50%, black 10%, transparent 80%);
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 20%, transparent 75%);
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 20%, transparent 75%);
   }
-  
-  .glass-panel {
-    background: rgba(11, 20, 40, 0.4);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+
+  /* -----------------------------------------------------------------------
+     Gradient icon tiles (the purple / green / blue / orange squares)
+  ----------------------------------------------------------------------- */
+  .icon-tile {
+    display: grid;
+    place-items: center;
+    border-radius: 0.875rem;
+    color: #fff;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.28),
+      0 10px 24px -12px rgb(0 0 0 / 0.65);
+  }
+  .icon-tile-violet {
+    background-image: linear-gradient(145deg, #a855f7 0%, #6d28d9 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.28),
+      0 12px 28px -14px rgba(168, 85, 247, 0.9);
+  }
+  .icon-tile-green {
+    background-image: linear-gradient(145deg, #22d98a 0%, #059669 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.28),
+      0 12px 28px -14px rgba(16, 185, 129, 0.9);
+  }
+  .icon-tile-blue {
+    background-image: linear-gradient(145deg, #3b9bff 0%, #2152e8 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.28),
+      0 12px 28px -14px rgba(47, 107, 255, 0.9);
+  }
+  .icon-tile-orange {
+    background-image: linear-gradient(145deg, #fcbf49 0%, #f0821e 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.3),
+      0 12px 28px -14px rgba(240, 130, 30, 0.9);
+  }
+  .icon-tile-cyan {
+    background-image: linear-gradient(145deg, #3ae3f7 0%, #0e7fa8 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.28),
+      0 12px 28px -14px rgba(34, 217, 245, 0.9);
+  }
+
+  /* -----------------------------------------------------------------------
+     Controls
+  ----------------------------------------------------------------------- */
+  /* Primary call to action: electric blue with a lit rim and a real glow. */
+  .btn-glow {
+    position: relative;
+    background-image: linear-gradient(135deg, #3b82f6 0%, #2f6bff 48%, #4f46e5 100%);
+    color: #fff;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.3),
+      var(--shadow-brand);
+    transition:
+      transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.25s ease,
+      filter 0.25s ease;
+  }
+  .btn-glow:hover {
+    transform: translateY(-2px);
+    filter: saturate(118%) brightness(1.06);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.35),
+      var(--shadow-brand-lift);
+  }
+  .btn-glow:active {
+    transform: translateY(0) scale(0.985);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.2),
+      var(--shadow-brand);
+  }
+
+  /* Outlined secondary CTA. */
+  .btn-outline {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-line);
+    color: var(--ink);
+    box-shadow: var(--shadow-md);
+    transition:
+      transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.25s ease,
+      background-color 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .btn-outline {
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+    }
+  }
+
+  .btn-outline:hover {
+    transform: translateY(-2px);
+    border-color: var(--glass-line-lit);
+    background: var(--glass-bg-strong);
     box-shadow: var(--shadow-lg);
   }
-
-  .glass-card {
-    background: rgba(11, 20, 40, 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--line);
-    transition: all 0.3s ease;
-  }
-  
-  .glass-card:hover {
-    background: rgba(19, 31, 58, 0.7);
-    border: 1px solid rgba(43, 92, 255, 0.3);
-    box-shadow: 0 0 20px rgba(43, 92, 255, 0.15);
-    transform: translateY(-2px);
+  .btn-outline:active {
+    transform: translateY(0) scale(0.985);
   }
 
-
-  /* Hairline grid used behind the hero. Subtle, not decorative noise. */
-  .bg-grid {
-    background-image:
-      linear-gradient(to right, var(--line) 1px, transparent 1px),
-      linear-gradient(to bottom, var(--line) 1px, transparent 1px);
-    background-size: 56px 56px;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 75%);
-  }
-
+  /* -----------------------------------------------------------------------
+     Layout helpers
+  ----------------------------------------------------------------------- */
   /* Home-screen / notch padding for the fixed mobile navigation. */
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -338,6 +721,14 @@
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Motion
+   ---------------------------------------------------------------------------
+   Everything here is decorative and compositor-friendly (transform / opacity
+   / filter only), so an animating hero never competes with an in-flight
+   transfer for layout work.
+--------------------------------------------------------------------------- */
+
 @keyframes float-y {
   0%,
   100% {
@@ -348,9 +739,43 @@
   }
 }
 
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+@keyframes aurora-drift-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(5%, 4%, 0) scale(1.12);
+    opacity: 1;
+  }
+}
+
+@keyframes aurora-drift-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.05);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translate3d(-6%, 6%, 0) scale(0.94);
+    opacity: 1;
+  }
+}
 
 @keyframes ambient-drift {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(0, 0) scale(1);
   }
   33% {
@@ -363,7 +788,49 @@
 
 @keyframes dash-flow {
   to {
-    stroke-dashoffset: -24;
+    stroke-dashoffset: -240;
+  }
+}
+
+/* A bright segment running along the transfer path. */
+@keyframes path-pulse {
+  0% {
+    stroke-dashoffset: 1200;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes glow-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes particle-rise {
+  0% {
+    transform: translate3d(0, 10px, 0) scale(0.6);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(6px, -70px, 0) scale(1.1);
+    opacity: 0;
   }
 }
 
@@ -391,6 +858,25 @@
   }
 }
 
+/* Deliberately `from`-only. A `to { transform: none }` keyframe combined with
+   `animation-fill-mode: both` would keep overriding `transform` after the
+   animation ends, which kills the hover lift on anything that also rises in
+   (the feature cards). With an implicit end keyframe the final value is the
+   element's own computed value, so hover keeps working. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+}
+
+/* Entrance for the hero column and the cards. Applied with a per-element
+   delay via an inline custom property. */
+.animate-rise {
+  animation: rise-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--rise-delay, 0ms);
+}
+
 /* Respect the OS setting: stop decorative motion, keep the interface usable.
    Transitions are shortened rather than removed so state changes remain
    perceptible. */
@@ -405,5 +891,12 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  /* An entrance animation that is cut to 0.01ms must still end visible. */
+  .animate-rise {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }

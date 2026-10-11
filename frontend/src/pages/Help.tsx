@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, HelpCircle, LifeBuoy, Smartphone, Wifi } from 'lucide-react';
-import { Alert, Panel, PanelHeader } from '../components/ui';
+import { Alert, PageHeader, Panel, PanelHeader } from '../components/ui';
 import { cn } from '../lib/cn';
 
 interface Faq {
@@ -94,7 +94,7 @@ function FaqList({ items }: { items: Faq[] }) {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <ul className="divide-y divide-line">
+    <ul className="divide-y divide-[color:var(--glass-line)]">
       {items.map((item, index) => {
         const expanded = open === index;
         return (
@@ -134,17 +134,13 @@ function FaqList({ items }: { items: Faq[] }) {
 
 export function Help() {
   return (
-    <div className="mx-auto w-full max-w-3xl 2xl:max-w-4xl px-4 sm:px-6 py-8 sm:py-10">
-      <header className="mb-8">
-        <h1 className="flex items-center gap-2.5 text-2xl 2xl:text-3xl font-bold text-ink sm:text-3xl">
-          <LifeBuoy className="size-7 text-brand" aria-hidden="true" />
-          Help &amp; troubleshooting
-        </h1>
-        <p className="mt-3 max-w-2xl 2xl:max-w-3xl 2xl:max-w-4xl text-ink-muted">
-          Most problems come down to one of the two networks blocking direct connections. Start
-          there.
-        </p>
-      </header>
+    <div className="shell-narrow py-8 sm:py-12">
+      <PageHeader
+        icon={<LifeBuoy className="size-6" aria-hidden="true" />}
+        title="Help & troubleshooting"
+        description="Most problems come down to one of the two networks blocking direct connections. Start there."
+        tile="icon-tile-orange"
+      />
 
       <Alert tone="info" className="mb-5" title="The single most useful fix">
         Put both devices on the same Wi-Fi network. Mobile data and corporate or guest Wi-Fi
@@ -153,17 +149,17 @@ export function Help() {
       </Alert>
 
       <div className="flex flex-col gap-4">
-        <Panel className="bg-surface-raised/80 backdrop-blur-xl border-line dark:border-white/10 shadow-lg">
+        <Panel>
           <PanelHeader title="Connection problems" icon={<Wifi className="size-5" aria-hidden="true" />} />
           <FaqList items={CONNECTION} />
         </Panel>
 
-        <Panel className="bg-surface-raised/80 backdrop-blur-xl border-line dark:border-white/10 shadow-lg">
+        <Panel>
           <PanelHeader title="Files and downloads" icon={<HelpCircle className="size-5" aria-hidden="true" />} />
           <FaqList items={FILES} />
         </Panel>
 
-        <Panel className="bg-surface-raised/80 backdrop-blur-xl border-line dark:border-white/10 shadow-lg">
+        <Panel>
           <PanelHeader title="Devices and browsers" icon={<Smartphone className="size-5" aria-hidden="true" />} />
           <FaqList items={DEVICES} />
         </Panel>

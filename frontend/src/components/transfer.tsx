@@ -129,7 +129,7 @@ export function RoomCard({ roomId, shareUrl }: { roomId: string; shareUrl: strin
         </p>
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <output
-            className="rounded-xl border border-line bg-surface-sunken px-5 py-3 font-mono text-3xl font-bold tracking-[0.3em] text-ink sm:text-4xl"
+            className="rounded-xl border border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] px-5 py-3 font-mono text-3xl font-bold tracking-[0.3em] text-ink sm:text-4xl"
             aria-label={`Room code ${roomId.split('').join(' ')}`}
           >
             {roomId}
@@ -174,7 +174,7 @@ export function StatLine({
   return (
     <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {items.map(({ label, value }) => (
-        <div key={label} className="rounded-card border border-line bg-surface-sunken px-3.5 py-3">
+        <div key={label} className="rounded-card border border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] px-3.5 py-3">
           <dt className="text-[11px] font-bold uppercase tracking-wide text-ink-subtle">{label}</dt>
           <dd className="mt-1 truncate text-sm font-bold text-ink tabular">{value}</dd>
         </div>

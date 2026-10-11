@@ -19,7 +19,7 @@ import {
   Alert,
   Badge,
   Button,
-  
+  PageHeader,
   Panel,
   PanelHeader,
   ProgressBar,
@@ -373,9 +373,13 @@ export function Send() {
   /* ----------------------------------------------------------------------- */
   if (phase === 'no-files') {
     return (
-      <div className="mx-auto w-full max-w-2xl 2xl:max-w-3xl 2xl:max-w-4xl px-4 sm:px-6 py-8 sm:py-12">
-        <h1 className="text-3xl 2xl:text-4xl font-extrabold text-ink mb-8">Send files</h1>
-        <Panel className="bg-surface-raised/80 backdrop-blur-xl border-line dark:border-white/10 shadow-lg p-4 sm:p-6 shadow-float">
+      <div className="shell-narrow py-8 sm:py-12">
+        <PageHeader
+          icon={<Upload className="size-6" aria-hidden="true" />}
+          title="Send files"
+          description="Pick what you want to share. Droply opens a room and streams the files straight to the other device — nothing is uploaded anywhere first."
+        />
+        <Panel className="p-4 sm:p-6">
           <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr]">
             <div
               onDrop={onDrop}
@@ -391,16 +395,18 @@ export function Send() {
                 if (dragDepth.current === 0) setDragging(false);
               }}
               className={cn(
-                'flex flex-col items-center justify-center rounded-card border-2 border-dashed border-line-strong dark:border-white/20 px-6 py-10 text-center transition-all duration-200',
+                'flex flex-col items-center justify-center rounded-card border-2 border-dashed px-6 py-10 text-center transition-all duration-200',
                 dragging
-                  ? 'border-brand bg-brand-soft/50 scale-[1.02]'
-                  : 'border-line/50 bg-surface-sunken/50 dark:bg-black/20 hover:border-brand/50 hover:bg-surface-hover/30',
+                  ? 'scale-[1.02] border-brand bg-brand-soft/40'
+                  : 'border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] hover:border-brand/50',
               )}
             >
               <span
                 className={cn(
-                  'grid size-14 place-items-center rounded-2xl transition-all duration-200 shadow-md',
-                  dragging ? 'bg-brand text-white shadow-brand-glow scale-110' : 'bg-surface-raised text-brand',
+                  'grid size-14 place-items-center rounded-2xl shadow-md transition-all duration-200',
+                  dragging
+                    ? 'icon-tile icon-tile-blue scale-110'
+                    : 'border border-[color:var(--glass-line)] bg-[color:var(--surface-hover)] text-brand',
                 )}
               >
                 <UploadCloud className="size-7" aria-hidden="true" />
@@ -413,7 +419,7 @@ export function Send() {
 
               <label
                 htmlFor={inputId}
-                className="mt-6 inline-flex h-11 cursor-pointer items-center gap-2 rounded-full bg-brand px-6 text-sm font-semibold text-white shadow-brand-glow transition-all hover:bg-brand-hover active:scale-95"
+                className="btn-glow mt-6 inline-flex h-11 cursor-pointer items-center gap-2 rounded-full px-6 text-sm font-semibold"
               >
                 <FolderOpen className="size-4" aria-hidden="true" />
                 Choose files
@@ -431,7 +437,7 @@ export function Send() {
               />
             </div>
 
-            <div className="flex flex-col rounded-card border border-line bg-surface-sunken/50 dark:bg-black/20">
+            <div className="flex flex-col rounded-card border border-[color:var(--glass-line)] bg-[color:var(--nav-shell)]">
               <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 bg-surface-raised/50 rounded-t-card">
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-ink">
@@ -482,7 +488,7 @@ export function Send() {
               </div>
 
               <div className="border-t border-line p-3 bg-surface-raised/50 rounded-b-card">
-                <Button size="lg" fullWidth disabled={files.length === 0} onClick={() => setPhase('opening')} className="rounded-full shadow-brand-glow bg-brand text-white hover:bg-brand-hover">
+                <Button size="lg" fullWidth disabled={files.length === 0} onClick={() => setPhase('opening')} className="rounded-full">
                   <Link2 className="size-4" aria-hidden="true" />
                   Create transfer room
                 </Button>
@@ -496,10 +502,10 @@ export function Send() {
 
 
   return (
-    <div className="mx-auto w-full max-w-2xl 2xl:max-w-3xl 2xl:max-w-4xl px-4 sm:px-6 py-8 sm:py-10">
+    <div className="shell-narrow py-8 sm:py-12">
       <StatusAnnouncer message={announcement} />
 
-      <Panel className="bg-surface-raised/80 backdrop-blur-xl border-line dark:border-white/10 shadow-lg ">
+      <Panel>
         <PanelHeader
           title="Send files"
           description={`${files.length} ${files.length === 1 ? 'file' : 'files'} · ${formatBytes(grandTotal)}`}
@@ -535,7 +541,7 @@ export function Send() {
               ) : (
                 <>
                   <RoomCard roomId={roomId} shareUrl={shareUrl} />
-                  <div className="flex items-center justify-center gap-2.5 rounded-card border border-line bg-surface-sunken/50 dark:bg-black/20 px-4 py-3">
+                  <div className="flex items-center justify-center gap-2.5 rounded-card border border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] px-4 py-3">
                     <Spinner className="size-4" />
                     <p className="text-sm font-semibold text-ink-muted">
                       Waiting for the other device to join
@@ -666,7 +672,7 @@ export function Send() {
                 <span
                   className={
                     phase === 'cancelled'
-                      ? 'grid size-16 place-items-center rounded-2xl bg-surface-sunken/50 dark:bg-black/20 text-ink-muted'
+                      ? 'grid size-16 place-items-center rounded-2xl bg-[color:var(--nav-shell)] text-ink-muted'
                       : 'grid size-16 place-items-center rounded-2xl bg-danger-soft text-danger'
                   }
                 >
@@ -715,7 +721,7 @@ export function Send() {
 
       {/* Selection summary, shown while the transfer has not started. */}
       {(phase === 'opening' || phase === 'waiting' || phase === 'negotiating' || phase === 'ready') && (
-        <Panel className="bg-surface-raised/80 backdrop-blur-xl border-line dark:border-white/10 shadow-lg mt-5">
+        <Panel className="mt-5">
           <PanelHeader title="Selected files" description={formatBytes(grandTotal)} />
           <ul className="divide-y divide-line">
             {files.map((file, index) => (

@@ -8,3 +8,5 @@ coverage/
 .DS_Store
 # Wrangler dev artifacts
 worker/.wrangler/
+.claude/
+.shots/

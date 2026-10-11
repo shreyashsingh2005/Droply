@@ -25,7 +25,6 @@ import {
   Image as ImageIcon,
   Info,
   Loader2,
-  Monitor,
   Moon,
   Presentation,
   Sun,
@@ -41,30 +40,62 @@ import type { ThemePreference } from '../hooks/useTheme';
 /* -------------------------------------------------------------------------- */
 
 export function Logo({ size = 32, withWordmark = true }: { size?: number; withWordmark?: boolean }) {
+  // The mark is rendered in both the header and the footer, so the gradient
+  // ids have to be unique per instance -- duplicate ids are invalid markup.
+  const uid = useId().replace(/[^a-zA-Z0-9-]/g, '');
+  const gradA = `droplyMarkA-${uid}`;
+  const gradB = `droplyMarkB-${uid}`;
+
   return (
     <span className="flex items-center gap-2.5">
+      {/* Same mark as favicon.svg and the PWA icons, so the brand is
+          consistent across the tab, the home screen and the page. It is drawn
+          as a filled gradient plane with its own glow rather than a glyph on a
+          tile, which is what gives the mark its lit, dimensional look. */}
       <span
-        className="grid shrink-0 place-items-center rounded-[30%] bg-gradient-to-br from-brand to-cyan shadow-brand-glow"
+        className="relative grid shrink-0 place-items-center"
         style={{ width: size, height: size }}
         aria-hidden="true"
       >
-        {/* Same mark as favicon.svg and the PWA icons, so the brand is
-            consistent across the tab, the home screen and the page. */}
+        <span
+          className="absolute inset-0 rounded-full opacity-70 blur-md"
+          style={{
+            background:
+              'radial-gradient(circle at 45% 45%, rgba(59,130,246,0.85) 0%, rgba(99,102,241,0.3) 55%, transparent 75%)',
+          }}
+        />
         <svg
-          viewBox="0 0 24 24"
+          viewBox="0 0 48 48"
+          className="relative"
+          style={{ width: size, height: size }}
           fill="none"
-          style={{ width: size * 0.6, height: size * 0.6 }}
-          stroke="white"
-          strokeWidth={2.2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
         >
-          <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" />
-          <path d="m21.854 2.147-10.94 10.939" />
+          <defs>
+            <linearGradient id={gradA} x1="8%" y1="12%" x2="88%" y2="92%">
+              <stop offset="0%" stopColor="#7dd3fc" />
+              <stop offset="42%" stopColor="#3b82f6" />
+              <stop offset="100%" stopColor="#4f46e5" />
+            </linearGradient>
+            <linearGradient id={gradB} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#a78bfa" />
+              <stop offset="100%" stopColor="#4c1d95" />
+            </linearGradient>
+          </defs>
+          {/* Upper wing */}
+          <path d="M42 6 24.5 24.2 7 17.4a1.1 1.1 0 0 1 .1-2.1L42 6Z" fill={`url(#${gradA})`} />
+          {/* Lower wing, darker, so the plane reads as folded */}
+          <path d="M42 6 30.6 42a1.1 1.1 0 0 1-2.1.1l-4.6-13.3L42 6Z" fill={`url(#${gradB})`} />
+          {/* Fold highlight */}
+          <path d="M42 6 23.9 28.8l.6-4.6Z" fill="#dbeafe" opacity="0.85" />
         </svg>
       </span>
       {withWordmark && (
-        <span className="text-[1.35rem] font-bold tracking-tight text-ink">Droply</span>
+        <span
+          className="font-bold tracking-[-0.03em] text-ink"
+          style={{ fontSize: Math.max(17, size * 0.62) }}
+        >
+          Droply
+        </span>
       )}
     </span>
   );
@@ -78,14 +109,11 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'subt
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary:
-    'bg-gradient-to-r from-brand to-brand-hover text-white shadow-brand-glow hover:shadow-[0_0_20px_rgba(43,92,255,0.5)] hover:-translate-y-0.5 active:translate-y-px disabled:shadow-none transition-all duration-300',
-  secondary:
-    'bg-surface-raised text-ink border border-line hover:bg-surface-hover hover:border-line-strong active:translate-y-px',
-  ghost: 'text-ink-muted hover:text-ink hover:bg-surface-hover',
-  danger:
-    'bg-danger text-white hover:brightness-110 active:translate-y-px disabled:brightness-100',
-  subtle: 'bg-brand-soft text-brand hover:brightness-[0.97] active:translate-y-px',
+  primary: 'btn-glow disabled:shadow-none disabled:translate-y-0',
+  secondary: 'btn-outline disabled:translate-y-0',
+  ghost: 'text-ink-muted hover:bg-[color:var(--surface-hover)] hover:text-ink',
+  danger: 'bg-danger text-white hover:brightness-110 active:translate-y-px disabled:brightness-100',
+  subtle: 'bg-brand-soft text-brand hover:brightness-[1.08] active:translate-y-px',
 };
 
 const SIZES: Record<ButtonSize, string> = {
@@ -181,12 +209,10 @@ export function PanelHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-line bg-surface-sunken/60 px-5 py-4 sm:px-7 sm:py-5">
+    <div className="flex items-start justify-between gap-4 border-b border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] px-5 py-4 sm:px-7 sm:py-5">
       <div className="flex min-w-0 items-start gap-3.5">
         {icon && (
-          <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl border border-line bg-surface-raised text-brand">
-            {icon}
-          </span>
+          <span className="icon-tile icon-tile-blue mt-0.5 size-10 shrink-0">{icon}</span>
         )}
         <div className="min-w-0">
           <h2 className="truncate text-lg font-bold text-ink sm:text-xl">{title}</h2>
@@ -195,6 +221,50 @@ export function PanelHeader({
       </div>
       {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
     </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Page header                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The heading block at the top of a route. Shared so every screen outside the
+ * home page opens with the same rhythm: gradient icon tile, large title, one
+ * line of muted supporting copy, and an optional action on the right.
+ */
+export function PageHeader({
+  icon,
+  title,
+  description,
+  actions,
+  tile = 'icon-tile-blue',
+}: {
+  icon: ReactNode;
+  title: string;
+  description?: string;
+  actions?: ReactNode;
+  tile?: string;
+}) {
+  return (
+    <header className="mb-7 flex flex-col gap-5 sm:mb-9 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <div className="flex items-center gap-3.5">
+          <span className={cn('icon-tile size-11 shrink-0 sm:size-12', tile)} aria-hidden="true">
+            {icon}
+          </span>
+          <h1 className="text-[clamp(1.6rem,3vw,2.25rem)] font-extrabold tracking-[-0.03em] text-ink">
+            {title}
+          </h1>
+        </div>
+        {description && (
+          <p className="mt-3.5 max-w-2xl text-[0.9375rem] leading-relaxed text-ink-muted">
+            {description}
+          </p>
+        )}
+      </div>
+      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+    </header>
   );
 }
 
@@ -423,7 +493,7 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center px-6 py-14 text-center">
-      <span className="grid size-16 place-items-center rounded-2xl border border-line bg-surface-sunken text-ink-subtle">
+      <span className="grid size-16 place-items-center rounded-2xl border border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] text-ink-subtle">
         {icon}
       </span>
       <h3 className="mt-5 text-lg font-bold text-ink">{title}</h3>
@@ -635,11 +705,19 @@ export function ConfirmDialog({
 /* Theme control                                                              */
 /* -------------------------------------------------------------------------- */
 
-const THEME_OPTIONS: { value: ThemePreference; label: string; Icon: typeof Sun }[] = [
-  { value: 'light', label: 'Light', Icon: Sun },
-  { value: 'dark', label: 'Dark', Icon: Moon },
-  { value: 'system', label: 'System', Icon: Monitor },
-];
+/**
+ * Light / dark switch.
+ *
+ * Two visible options, matching the product design. `system` remains a valid
+ * preference in `useTheme` (and is what an untouched install resolves
+ * through), it simply is not one of the two buttons here; choosing either
+ * button pins the theme explicitly.
+ */
+const THEME_OPTIONS: { value: Exclude<ThemePreference, 'system'>; label: string; Icon: typeof Sun }[] =
+  [
+    { value: 'light', label: 'Light', Icon: Sun },
+    { value: 'dark', label: 'Dark', Icon: Moon },
+  ];
 
 export function ThemeSwitch({
   preference,
@@ -652,7 +730,7 @@ export function ThemeSwitch({
     <div
       role="radiogroup"
       aria-label="Colour theme"
-      className="inline-flex items-center gap-0.5 rounded-xl border border-line bg-surface-sunken p-0.5"
+      className="inline-flex items-center gap-1 rounded-full border border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] p-1 backdrop-blur-md"
     >
       {THEME_OPTIONS.map(({ value, label, Icon }) => {
         const active = preference === value;
@@ -666,13 +744,13 @@ export function ThemeSwitch({
             title={`${label} theme`}
             onClick={() => onChange(value)}
             className={cn(
-              'grid size-8 place-items-center rounded-[0.6rem] transition-colors',
+              'grid size-9 place-items-center rounded-full transition-all duration-200',
               active
-                ? 'bg-surface-raised text-brand shadow-soft'
-                : 'text-ink-subtle hover:text-ink',
+                ? 'bg-[color:var(--surface-hover)] text-cyan shadow-soft'
+                : 'text-ink-subtle hover:bg-[color:var(--surface-hover)]/60 hover:text-ink',
             )}
           >
-            <Icon className="size-4" aria-hidden="true" />
+            <Icon className="size-[1.1rem]" aria-hidden="true" />
           </button>
         );
       })}

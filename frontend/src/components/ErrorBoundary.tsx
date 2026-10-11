@@ -130,7 +130,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <summary className="cursor-pointer select-none rounded-lg px-3 py-2 text-sm font-semibold text-ink-muted hover:bg-surface-hover hover:text-ink">
             Technical details
           </summary>
-          <div className="mt-3 space-y-3 rounded-card border border-line bg-surface-sunken p-4">
+          <div className="mt-3 space-y-3 rounded-card border border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] p-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-ink-subtle">Error</p>
               <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-words font-mono text-xs text-danger">

@@ -20,16 +20,16 @@ export function NotFound() {
   const { pathname } = useLocation();
 
   return (
-    <div className="mx-auto w-full max-w-xl py-14 sm:py-20">
-      <Panel className="p-7 text-center sm:p-10">
-        <span className="mx-auto grid size-16 place-items-center rounded-2xl bg-surface-sunken text-ink-subtle">
+    <div className="mx-auto w-full max-w-xl px-4 py-14 sm:py-20">
+      <Panel className="rounded-panel p-7 text-center sm:p-10">
+        <span className="icon-tile icon-tile-blue mx-auto size-16">
           <Compass className="size-8" aria-hidden="true" />
         </span>
 
         <h1 className="mt-6 text-2xl font-bold text-ink sm:text-3xl">Page not found</h1>
         <p className="mt-3 text-ink-muted">
           There is nothing at{' '}
-          <code className="break-all rounded bg-surface-sunken px-1.5 py-0.5 font-mono text-sm text-ink">
+          <code className="break-all rounded bg-[color:var(--surface-hover)] px-1.5 py-0.5 font-mono text-sm text-ink">
             {pathname}
           </code>
           .
@@ -44,7 +44,7 @@ export function NotFound() {
             <li key={to}>
               <Link
                 to={to}
-                className="flex h-full flex-col items-center gap-1.5 rounded-card border border-line bg-surface-sunken px-4 py-4 transition-colors hover:border-line-strong hover:bg-surface-hover"
+                className="flex h-full flex-col items-center gap-1.5 rounded-card border border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] px-4 py-4 transition-colors hover:border-[color:var(--glass-line-lit)] hover:bg-[color:var(--surface-hover)]"
               >
                 <Icon className="size-5 text-brand" aria-hidden="true" />
                 <span className="text-sm font-bold text-ink">{label}</span>

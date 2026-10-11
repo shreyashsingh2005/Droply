@@ -18,6 +18,7 @@ import {
   EmptyState,
   FileTypeIcon,
   IconButton,
+  PageHeader,
   Panel,
   PanelHeader,
   Spinner,
@@ -134,25 +135,21 @@ export function History() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-3xl 2xl:max-w-4xl px-4 sm:px-6 py-8 sm:py-10">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2.5 text-2xl 2xl:text-3xl font-bold text-ink sm:text-3xl">
-            <HistoryIcon className="size-7 text-brand" aria-hidden="true" />
-            Transfer history
-          </h1>
-          <p className="mt-2 max-w-xl text-sm text-ink-muted">
-            A record of what you have sent and received on this device. Kept locally, in this
-            browser only.
-          </p>
-        </div>
-        {records.length > 0 && (
-          <Button variant="secondary" onClick={() => setConfirmClear(true)}>
-            <Trash2 className="size-4" aria-hidden="true" />
-            Clear history
-          </Button>
-        )}
-      </div>
+    <div className="shell-narrow py-8 sm:py-12">
+      <PageHeader
+        icon={<HistoryIcon className="size-6" aria-hidden="true" />}
+        title="Transfer history"
+        description="A record of what you have sent and received on this device. Kept locally, in this browser only."
+        tile="icon-tile-violet"
+        actions={
+          records.length > 0 ? (
+            <Button variant="secondary" onClick={() => setConfirmClear(true)}>
+              <Trash2 className="size-4" aria-hidden="true" />
+              Clear history
+            </Button>
+          ) : undefined
+        }
+      />
 
       <Alert tone="neutral" className="mb-5" title="Metadata only — not the files">
         Droply records file names, sizes and times, never the file contents. That keeps your device
@@ -160,13 +157,13 @@ export function History() {
         again, ask the sender to share it again.
       </Alert>
 
-      <Panel className="bg-surface-raised/80 backdrop-blur-xl border-line dark:border-white/10 shadow-lg ">
+      <Panel>
         <PanelHeader
           title="Records"
           description={`${counts.received} received · ${counts.sent} sent`}
         />
 
-        <div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center sm:p-5">
+        <div className="flex flex-col gap-3 border-b border-[color:var(--glass-line)] p-4 sm:flex-row sm:items-center sm:p-5">
           <div className="relative flex-1">
             <Search
               className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-subtle"
@@ -178,14 +175,14 @@ export function History() {
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search by file name"
               aria-label="Search history by file name"
-              className="w-full rounded-xl border border-line bg-surface-sunken/50 dark:bg-black/20 py-2.5 pl-10 pr-3 text-sm text-ink placeholder:text-ink-subtle focus:border-brand focus:bg-surface-raised"
+              className="w-full rounded-xl border border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] py-2.5 pl-10 pr-3 text-sm text-ink placeholder:text-ink-subtle focus:border-brand"
             />
           </div>
 
           <div
             role="radiogroup"
             aria-label="Filter by direction"
-            className="flex items-center gap-0.5 rounded-xl border border-line bg-surface-sunken/50 dark:bg-black/20 p-0.5"
+            className="flex items-center gap-0.5 rounded-xl border border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] p-0.5"
           >
             {FILTERS.map(({ value, label }) => (
               <button
@@ -235,7 +232,7 @@ export function History() {
                 <div className="flex gap-2.5">
                   <Link
                     to="/"
-                    className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-white shadow-brand-glow hover:bg-brand-hover"
+                    className="btn-glow inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold"
                   >
                     Send a file
                   </Link>
@@ -260,7 +257,7 @@ export function History() {
             }
           />
         ) : (
-          <ul className="divide-y divide-line">
+          <ul className="divide-y divide-[color:var(--glass-line)]">
             {visible.map((record) => (
               <li
                 key={record.id}
