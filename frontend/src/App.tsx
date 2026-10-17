@@ -232,7 +232,12 @@ function Footer() {
   return (
     <footer className="relative z-10 mt-16 border-t border-[color:var(--glass-line)]">
       <div className="shell flex flex-col items-center gap-5 py-9 md:flex-row md:justify-between">
-        <Logo size={26} />
+        <div className="flex items-center gap-2.5">
+          <Logo size={26} />
+          <span className="rounded-full border border-[color:var(--glass-line)] bg-[color:var(--surface-raised)]/60 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-ink-muted">
+            v2.0
+          </span>
+        </div>
         <nav aria-label="Footer" className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
           {[...PRIMARY_NAV, ...SECONDARY_NAV].map(({ to, label }) => (
             <NavLink
