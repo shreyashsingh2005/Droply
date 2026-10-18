@@ -498,6 +498,8 @@
     position: absolute;
     inset: 0;
     overflow: hidden;
+    contain: paint;
+    pointer-events: none;
   }
 
   .app-aurora::before,
@@ -510,19 +512,19 @@
   }
 
   .app-aurora::before {
-    width: min(120vw, 1500px);
+    width: min(100%, 1500px);
     height: min(90vh, 1000px);
     top: -32%;
-    left: -18%;
+    left: -10%;
     background: radial-gradient(circle at 50% 50%, var(--aurora-1) 0%, transparent 68%);
     animation: aurora-drift-a 26s ease-in-out infinite;
   }
 
   .app-aurora::after {
-    width: min(100vw, 1200px);
+    width: min(100%, 1200px);
     height: min(80vh, 900px);
     top: -8%;
-    right: -20%;
+    right: -10%;
     background:
       radial-gradient(circle at 40% 40%, var(--aurora-3) 0%, transparent 65%),
       radial-gradient(circle at 70% 70%, var(--aurora-2) 0%, transparent 60%);
@@ -538,14 +540,16 @@
     bottom: 0;
     height: clamp(280px, 42vh, 620px);
     overflow: hidden;
+    contain: paint;
     perspective: 520px;
     perspective-origin: 50% 0%;
+    pointer-events: none;
   }
 
   .app-floor::before {
     content: "";
     position: absolute;
-    inset-inline: -55%;
+    inset-inline: 0;
     top: 0;
     height: 170%;
     transform: rotateX(70deg);

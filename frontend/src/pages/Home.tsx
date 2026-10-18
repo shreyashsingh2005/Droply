@@ -89,8 +89,8 @@ export function Home() {
       {/* ================================================================
           Hero
           ================================================================ */}
-      <section className="relative isolate pb-10 pt-6 sm:pt-10 lg:pb-16 lg:pt-14">
-        <div className="shell grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] lg:gap-6 xl:gap-10">
+      <section className="relative isolate w-full max-w-full min-w-0 overflow-hidden pb-10 pt-6 sm:pt-10 lg:overflow-visible lg:pb-16 lg:pt-14">
+        <div className="shell grid grid-cols-1 min-w-0 items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] lg:gap-6 xl:gap-10">
           {/* ---- copy column ---- */}
           <div className="relative z-10 flex w-full max-w-full min-w-0 flex-col items-start text-left">
             {/* Status pill */}
@@ -191,7 +191,7 @@ export function Home() {
 
           {/* ---- illustration column ---- */}
           <div
-            className="animate-rise relative w-full max-w-full overflow-hidden sm:overflow-visible lg:-mr-6 xl:-mr-10"
+            className="animate-rise relative w-full max-w-full min-w-0 overflow-hidden sm:overflow-visible lg:-mr-6 xl:-mr-10"
             style={{ '--rise-delay': '140ms' } as CSSProperties}
           >
             {/* Glow pooled behind the devices, so the illustration sits in
