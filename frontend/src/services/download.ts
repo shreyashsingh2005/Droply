@@ -12,8 +12,24 @@
  * system share sheet ("Save to Files", "Save Image") instead of pretending.
  */
 
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { log } from '../lib/logger';
 import { sanitizeFilename } from './mime';
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result as string;
+      const comma = dataUrl.indexOf(',');
+      resolve(comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
 
 /** iOS/iPadOS, including iPadOS reporting itself as a Mac with touch. */
 export function isAppleMobile(): boolean {
@@ -25,6 +41,9 @@ export function isAppleMobile(): boolean {
 
 /** Whether the system share sheet can take this file. */
 export function canShareFile(blob: Blob, filename: string): boolean {
+  if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform()) {
+    return true;
+  }
   if (typeof navigator === 'undefined' || !navigator.canShare || !navigator.share) return false;
   try {
     const file = new File([blob], sanitizeFilename(filename), {
@@ -48,6 +67,34 @@ export async function saveFile(
   objectUrl: string,
 ): Promise<SaveOutcome> {
   const name = sanitizeFilename(filename);
+
+  // On native Android / iOS Capacitor platforms, write directly to user storage.
+  if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform()) {
+    try {
+      const base64 = await blobToBase64(_blob);
+      await Filesystem.writeFile({
+        path: `Droply/${name}`,
+        data: base64,
+        directory: Directory.Documents,
+        recursive: true,
+      });
+      return 'saved';
+    } catch (err) {
+      log.app.warn('saving to Documents/Droply failed, attempting root Documents', err);
+      try {
+        const base64 = await blobToBase64(_blob);
+        await Filesystem.writeFile({
+          path: name,
+          data: base64,
+          directory: Directory.Documents,
+          recursive: true,
+        });
+        return 'saved';
+      } catch (err2) {
+        log.app.error('native filesystem write failed', err2);
+      }
+    }
+  }
 
   // Anchor download: correct on desktop and on Android Chrome, and on iOS 13+
   // *when triggered by a gesture*, which is the case here.
@@ -81,6 +128,27 @@ export async function saveFile(
 /** Offer the file to the system share sheet. Gesture-bound, like `saveFile`. */
 export async function shareFile(blob: Blob, filename: string): Promise<SaveOutcome> {
   const name = sanitizeFilename(filename);
+
+  // On native Android / iOS Capacitor platforms, use native share sheet.
+  if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform()) {
+    try {
+      const base64 = await blobToBase64(blob);
+      const writeResult = await Filesystem.writeFile({
+        path: `droply-share/${name}`,
+        data: base64,
+        directory: Directory.Cache,
+        recursive: true,
+      });
+      await Share.share({
+        title: name,
+        url: writeResult.uri,
+      });
+      return 'shared';
+    } catch (err) {
+      log.app.warn('native share failed', err);
+      return 'failed';
+    }
+  }
   try {
     const file = new File([blob], name, { type: blob.type || 'application/octet-stream' });
     await navigator.share({ files: [file], title: name });

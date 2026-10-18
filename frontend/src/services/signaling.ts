@@ -15,6 +15,7 @@
  * and a reconnect replaces the stale socket instead of being refused.
  */
 
+import { Capacitor } from '@capacitor/core';
 import { log } from '../lib/logger';
 
 export const PROTOCOL_VERSION = 2;
@@ -70,8 +71,14 @@ export function resolveSignalingUrl(
   opts?: { dev?: boolean; configured?: string; location?: { protocol: string; host: string } },
 ): string {
   const dev = opts?.dev ?? import.meta.env.DEV;
-  const configured = (opts?.configured ?? import.meta.env.VITE_SIGNALING_URL ?? '').trim();
+  let configured = (opts?.configured ?? import.meta.env.VITE_SIGNALING_URL ?? '').trim();
   const loc = opts?.location ?? { protocol: window.location.protocol, host: window.location.host };
+
+  // On native Capacitor (Android/iOS), window.location is localhost/capacitor.
+  // Unless explicitly overridden, route to the production Cloudflare signaling worker.
+  if (!configured && typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform()) {
+    configured = 'https://droply-signaling.shreyashsingh9717.workers.dev';
+  }
 
   const sameOrigin = (): string => {
     const scheme = loc.protocol === 'https:' ? 'wss:' : 'ws:';

@@ -22,6 +22,10 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Logo, Spinner, ThemeSwitch } from './components/ui';
 import { useTheme, type ThemePreference } from './hooks/useTheme';
 import { cn } from './lib/cn';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { App as CapApp } from '@capacitor/app';
+import { SplashScreen } from '@capacitor/splash-screen';
 
 const Send = lazy(() => import('./pages/Send').then((m) => ({ default: m.Send })));
 const Receive = lazy(() => import('./pages/Receive').then((m) => ({ default: m.Receive })));
@@ -313,6 +317,33 @@ export default function App() {
   // Single source of truth for the theme: applies the class to <html> and
   // keeps following the OS while the preference is "system".
   const { preference, setPreference } = useTheme();
+
+  // Native Android/iOS system bars and hardware back button
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      SplashScreen.hide().catch(() => {});
+
+      const backSub = CapApp.addListener('backButton', () => {
+        if (window.location.pathname !== '/') {
+          window.history.back();
+        } else {
+          CapApp.exitApp();
+        }
+      });
+
+      return () => {
+        backSub.then((s) => s.remove()).catch(() => {});
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      const isDark = document.documentElement.classList.contains('dark');
+      StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {});
+      StatusBar.setBackgroundColor({ color: isDark ? '#03081A' : '#F8FAFC' }).catch(() => {});
+    }
+  }, [preference]);
 
   return (
     <BrowserRouter>
