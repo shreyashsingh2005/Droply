@@ -92,11 +92,11 @@ export function Home() {
       <section className="relative isolate pb-10 pt-6 sm:pt-10 lg:pb-16 lg:pt-14">
         <div className="shell grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] lg:gap-6 xl:gap-10">
           {/* ---- copy column ---- */}
-          <div className="relative z-10 flex flex-col items-start text-left">
+          <div className="relative z-10 flex w-full max-w-full min-w-0 flex-col items-start text-left">
             {/* Status pill */}
             <Link
               to="/privacy"
-              className="animate-rise group glass mb-7 inline-flex max-w-full items-center gap-2.5 rounded-full py-1.5 pl-3.5 pr-2 text-xs shadow-card transition-colors hover:border-[color:var(--glass-line-lit)] sm:mb-9 sm:text-[0.8125rem]"
+              className="animate-rise group glass mb-7 inline-flex max-w-full min-w-0 items-center gap-2 rounded-full py-1.5 pl-3 pr-2 text-xs shadow-card transition-colors hover:border-[color:var(--glass-line-lit)] sm:mb-9 sm:gap-2.5 sm:pl-3.5 sm:text-[0.8125rem]"
               style={{ '--rise-delay': '0ms' } as CSSProperties}
             >
               <span className="relative flex size-2 shrink-0" aria-hidden="true">
@@ -108,9 +108,9 @@ export function Home() {
                 />
                 <span className="relative size-2 rounded-full bg-success" />
               </span>
-              <span className="whitespace-nowrap font-semibold text-ink">Direct P2P Transfer</span>
-              <span className="h-3.5 w-px shrink-0 bg-[color:var(--glass-line)]" aria-hidden="true" />
-              <span className="truncate font-medium text-ink-muted">
+              <span className="shrink-0 font-semibold text-ink">Direct P2P Transfer</span>
+              <span className="hidden h-3.5 w-px shrink-0 bg-[color:var(--glass-line)] sm:inline-block" aria-hidden="true" />
+              <span className="hidden min-w-0 flex-1 truncate font-medium text-ink-muted sm:inline">
                 Your files stay on your devices
               </span>
               <span className="grid size-5 shrink-0 place-items-center rounded-full bg-[color:var(--surface-hover)] text-ink-muted transition-transform group-hover:translate-x-0.5">
@@ -119,7 +119,7 @@ export function Home() {
             </Link>
 
             <h1
-              className="animate-rise mb-6 text-[clamp(2.75rem,6.4vw,5.25rem)] font-extrabold leading-[1.02] tracking-[-0.035em] text-ink 2xl:text-[5.75rem]"
+              className="animate-rise mb-6 w-full max-w-full min-w-0 break-words text-[clamp(2.125rem,7.5vw,5.25rem)] font-extrabold leading-[1.04] tracking-[-0.035em] text-ink 2xl:text-[5.75rem]"
               style={{ '--rise-delay': '60ms' } as CSSProperties}
             >
               Your files.
@@ -132,13 +132,13 @@ export function Home() {
                   empty rest of the line. The extra bottom padding (cancelled
                   by the negative margin) gives background-clip:text enough
                   box to paint the descender. */}
-              <span className="text-gradient-hero -mb-[0.14em] block w-fit pb-[0.14em]">
+              <span className="text-gradient-hero -mb-[0.14em] block w-fit max-w-full pb-[0.14em]">
                 Directly.
               </span>
             </h1>
 
             <p
-              className="animate-rise mb-8 max-w-[34rem] text-[clamp(1.0625rem,1.35vw,1.3125rem)] font-normal leading-[1.6] text-ink-muted sm:mb-10"
+              className="animate-rise mb-8 w-full max-w-[34rem] min-w-0 text-[clamp(1rem,3.4vw,1.3125rem)] font-normal leading-[1.6] text-ink-muted sm:mb-10"
               style={{ '--rise-delay': '120ms' } as CSSProperties}
             >
               Droply lets you share files instantly between devices with a secure, direct
@@ -147,29 +147,29 @@ export function Home() {
 
             {/* ---- calls to action ---- */}
             <div
-              className="animate-rise mb-8 flex w-full flex-col gap-3.5 sm:w-auto sm:flex-row sm:gap-4"
+              className="animate-rise mb-8 flex w-full max-w-md flex-col gap-3.5 sm:max-w-none sm:w-auto sm:flex-row sm:gap-4"
               style={{ '--rise-delay': '180ms' } as CSSProperties}
             >
               <Link
                 to="/send"
-                className="btn-glow group flex h-[3.5rem] items-center justify-center gap-3 rounded-full px-7 text-base font-bold tracking-tight sm:px-8 2xl:h-16 2xl:text-lg"
+                className="btn-glow group flex h-[3.5rem] w-full items-center justify-center gap-3 rounded-full px-6 text-base font-bold tracking-tight sm:w-auto sm:px-8 2xl:h-16 2xl:text-lg"
               >
-                <Upload className="size-5 transition-transform group-hover:-translate-y-0.5" aria-hidden="true" />
-                Send files
+                <Upload className="size-5 shrink-0 transition-transform group-hover:-translate-y-0.5" aria-hidden="true" />
+                <span>Send files</span>
                 <ArrowRight
-                  className="size-[1.125rem] opacity-80 transition-transform group-hover:translate-x-1"
+                  className="size-[1.125rem] shrink-0 opacity-80 transition-transform group-hover:translate-x-1"
                   aria-hidden="true"
                 />
               </Link>
 
               <Link
                 to="/receive"
-                className="btn-outline group flex h-[3.5rem] items-center justify-center gap-3 rounded-full px-7 text-base font-bold tracking-tight sm:px-8 2xl:h-16 2xl:text-lg"
+                className="btn-outline group flex h-[3.5rem] w-full items-center justify-center gap-3 rounded-full px-6 text-base font-bold tracking-tight sm:w-auto sm:px-8 2xl:h-16 2xl:text-lg"
               >
-                <Download className="size-5 transition-transform group-hover:translate-y-0.5" aria-hidden="true" />
-                Receive files
+                <Download className="size-5 shrink-0 transition-transform group-hover:translate-y-0.5" aria-hidden="true" />
+                <span>Receive files</span>
                 <ArrowRight
-                  className="size-[1.125rem] opacity-70 transition-transform group-hover:translate-x-1"
+                  className="size-[1.125rem] shrink-0 opacity-70 transition-transform group-hover:translate-x-1"
                   aria-hidden="true"
                 />
               </Link>
@@ -177,13 +177,13 @@ export function Home() {
 
             {/* ---- trust indicators ---- */}
             <ul
-              className="animate-rise flex flex-wrap items-center gap-x-6 gap-y-2.5 text-[0.8125rem] font-medium text-ink-subtle sm:gap-x-7 sm:text-sm"
+              className="animate-rise flex w-full max-w-full flex-wrap items-center gap-x-4 gap-y-2.5 text-[0.75rem] font-medium text-ink-subtle sm:gap-x-7 sm:text-sm"
               style={{ '--rise-delay': '240ms' } as CSSProperties}
             >
               {TRUST.map(({ Icon, label }) => (
-                <li key={label} className="flex items-center gap-2">
+                <li key={label} className="flex shrink-0 items-center gap-2">
                   <Icon className="size-4 shrink-0 text-cyan" aria-hidden="true" />
-                  {label}
+                  <span>{label}</span>
                 </li>
               ))}
             </ul>
@@ -191,7 +191,7 @@ export function Home() {
 
           {/* ---- illustration column ---- */}
           <div
-            className="animate-rise relative -mx-2 w-full sm:mx-0 lg:-mr-6 xl:-mr-10"
+            className="animate-rise relative w-full max-w-full overflow-hidden sm:overflow-visible lg:-mr-6 xl:-mr-10"
             style={{ '--rise-delay': '140ms' } as CSSProperties}
           >
             {/* Glow pooled behind the devices, so the illustration sits in
@@ -214,12 +214,12 @@ export function Home() {
           ================================================================ */}
       <section className="relative z-10 pb-10 sm:pb-14">
         <div className="shell">
-          <div className="glass grid grid-cols-1 gap-x-4 gap-y-6 rounded-[1.75rem] px-6 py-6 shadow-float sm:grid-cols-2 sm:px-8 lg:grid-cols-4 lg:gap-y-0 lg:px-10 lg:py-7">
+          <div className="glass grid grid-cols-1 gap-x-4 gap-y-5 rounded-2xl px-5 py-5 shadow-float sm:grid-cols-2 sm:rounded-[1.75rem] sm:px-8 sm:py-6 lg:grid-cols-4 lg:gap-y-0 lg:px-10 lg:py-7">
             {BENEFITS.map(({ Icon, title, detail, tone, detailAccent }, index) => (
               <div
                 key={title}
                 className={[
-                  'flex items-center gap-4',
+                  'flex min-w-0 items-center gap-3.5 sm:gap-4',
                   // Hairline dividers between the items, matching the
                   // reference. Only between, never leading, and only once the
                   // four items sit on one row.
@@ -227,8 +227,8 @@ export function Home() {
                 ].join(' ')}
               >
                 <Icon className={`size-7 shrink-0 ${tone}`} aria-hidden="true" strokeWidth={1.9} />
-                <div className="min-w-0">
-                  <p className="text-[0.9375rem] font-bold leading-tight text-ink">{title}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[0.9375rem] font-bold leading-tight text-ink">{title}</p>
                   <p
                     className={`mt-1 text-[0.8125rem] leading-tight ${
                       detailAccent ? 'text-brand' : 'text-ink-muted'
@@ -249,11 +249,11 @@ export function Home() {
       <section className="relative z-10 pb-16 sm:pb-20">
         <h2 className="sr-only">Why Droply</h2>
         <div className="shell">
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6 2xl:gap-7">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6 2xl:gap-7">
             {FEATURES.map(({ Icon, tile, title, body }, index) => (
               <article
                 key={title}
-                className="feature-card animate-rise flex flex-col items-start rounded-[1.5rem] p-6 text-left sm:p-7"
+                className="feature-card animate-rise flex w-full min-w-0 flex-col items-start rounded-2xl p-5 text-left sm:rounded-[1.5rem] sm:p-7"
                 style={{ '--rise-delay': `${index * 70}ms` } as CSSProperties}
               >
                 <span className={`icon-tile ${tile} mb-6 size-12 2xl:size-14`} aria-hidden="true">

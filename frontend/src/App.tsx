@@ -203,25 +203,25 @@ function MobileNav() {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--glass-line)] bg-[color:var(--nav-bg)] pb-safe backdrop-blur-xl md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 w-full max-w-full border-t border-[color:var(--glass-line)] bg-[color:var(--nav-bg)] pb-safe backdrop-blur-xl md:hidden"
     >
-      <ul className="mx-auto flex max-w-md items-stretch">
+      <ul className="mx-auto flex w-full max-w-md items-stretch px-1">
         {PRIMARY_NAV.map(({ to, label, Icon, end }) => (
-          <li key={to} className="flex-1">
+          <li key={to} className="min-w-0 flex-1">
             <NavLink
               to={to}
               end={end}
               className={({ isActive }) =>
                 cn(
-                  'flex min-h-[3.5rem] flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-semibold transition-colors',
-                  isActive ? 'text-brand' : 'text-ink-subtle',
+                  'flex min-h-[3.5rem] w-full flex-col items-center justify-center gap-1 px-1 py-1.5 text-[11px] font-semibold transition-colors',
+                  isActive ? 'text-brand font-bold' : 'text-ink-subtle hover:text-ink',
                 )
               }
             >
               {({ isActive }) => (
                 <>
-                  <Icon className={cn('size-5', isActive && 'stroke-[2.4]')} aria-hidden="true" />
-                  {label}
+                  <Icon className={cn('size-5 shrink-0', isActive && 'stroke-[2.4] text-brand')} aria-hidden="true" />
+                  <span className="max-w-full truncate">{label}</span>
                 </>
               )}
             </NavLink>
@@ -358,7 +358,7 @@ export default function App() {
       {/* No background on this wrapper: `body` paints the base colour, and
           the Atmosphere layers sit at a negative z-index above it. An opaque
           background here would paint over them. */}
-      <div className="relative flex min-h-screen min-h-dvh flex-col text-ink">
+      <div className="relative flex min-h-screen min-h-dvh w-full max-w-full flex-col overflow-x-hidden text-ink">
         <Atmosphere />
         <OfflineBanner />
         <BrowserSupportBanner />

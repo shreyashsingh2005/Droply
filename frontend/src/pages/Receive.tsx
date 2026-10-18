@@ -462,7 +462,7 @@ export function Receive() {
                   aria-describedby={entryError ? 'room-code-error' : 'room-code-hint'}
                   aria-invalid={entryError ? true : undefined}
                   placeholder="ABC123"
-                  className="mt-3 w-full rounded-xl border border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] px-4 py-4 text-center font-mono text-2xl font-bold uppercase tracking-[0.3em] text-ink placeholder:tracking-[0.2em] placeholder:text-ink-subtle/50 focus:border-brand sm:text-3xl"
+                  className="mt-3 w-full rounded-xl border border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] px-3 py-3.5 text-center font-mono text-xl font-bold uppercase tracking-[0.2em] text-ink placeholder:tracking-[0.15em] placeholder:text-ink-subtle/50 focus:border-brand sm:px-4 sm:py-4 sm:text-3xl sm:tracking-[0.3em]"
                 />
                 {entryError && (
                   <p id="room-code-error" role="alert" className="mt-2 text-sm font-medium text-danger">

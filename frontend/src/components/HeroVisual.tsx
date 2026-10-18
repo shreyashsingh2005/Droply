@@ -145,7 +145,7 @@ export const HeroVisual = memo(function HeroVisual() {
        here. */
     <svg
       viewBox="0 0 1040 700"
-      className="h-auto w-full overflow-visible"
+      className="h-auto w-full max-w-full overflow-hidden sm:overflow-visible"
       preserveAspectRatio="xMidYMid meet"
       role="img"
       aria-label="A laptop sending four files directly to a phone over a glowing peer-to-peer connection."

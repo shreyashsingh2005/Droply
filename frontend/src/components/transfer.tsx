@@ -129,7 +129,7 @@ export function RoomCard({ roomId, shareUrl }: { roomId: string; shareUrl: strin
         </p>
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <output
-            className="rounded-xl border border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] px-5 py-3 font-mono text-3xl font-bold tracking-[0.3em] text-ink sm:text-4xl"
+            className="max-w-full truncate rounded-xl border border-[color:var(--glass-line)] bg-[color:var(--nav-shell)] px-4 py-2.5 font-mono text-2xl font-bold tracking-[0.2em] text-ink sm:px-5 sm:py-3 sm:text-4xl sm:tracking-[0.3em]"
             aria-label={`Room code ${roomId.split('').join(' ')}`}
           >
             {roomId}
